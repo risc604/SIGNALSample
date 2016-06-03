@@ -29,6 +29,8 @@ package com.esignal.signaldemo;
         import android.os.Handler;
         import android.os.IBinder;
         import android.util.Log;
+
+        import java.io.Serializable;
         import java.util.List;
         import java.util.UUID;
 
@@ -48,14 +50,13 @@ package com.esignal.signaldemo;
 // using @TargeApi instead of @SuppressLint("NewApi")
 @SuppressWarnings("deprecation")
 
-public class BluetoothLeService extends Service {
-
+public class BluetoothLeService extends Service
+{
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothScanner;
-
 
     private ScanSettings scanSettings;
     List<ScanFilter> filters;
@@ -65,44 +66,27 @@ public class BluetoothLeService extends Service {
     public boolean mBluetoothGattServiceDiscover;
     public boolean mBluetoothGattConnected;
 
-
     private int mConnectionState = STATE_DISCONNECTED;
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
     private static final int STATE_ConnectSus = 3;
 
-    public final static String ACTION_GATT_CONNECTED =
-            "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
-    public final static String ACTION_GATT_DISCONNECTED =
-            "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
-    public final static String ACTION_GATT_SERVICES_DISCOVERED =
-            "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
-    public final static String ACTION_DATA_AVAILABLE =
-            "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
-    public final static String EXTRA_DATA =
-            "com.example.bluetooth.le.EXTRA_DATA";
-    public final static String ACTION_GATT_DEVICE_DISCOVERED =
-            "com.example.bluetooth.le.ACTION_GATT_DEVICE_DISCOVERED";
-    public final static String ACTION_mBluetoothDeviceName =
-            "com.example.bluetooth.le.mBluetoothDevice";
-    public final static String ACTION_mBluetoothDeviceAddress =
-            "com.example.bluetooth.le.mBluetoothDeviceAddress";
-    public final static String ACTION_mBluetoothDeviceAdv =
-            "com.example.bluetooth.le.mBluetoothDeviceAdv";
-    public final static String ACTION_Enable =
-            "com.example.bluetooth.le.ACTION_Enable";
-    public final static String ACTION_Connect_Fail =
-            "com.example.bluetooth.le.ACTION_Connect_Fail";
+    public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
+    public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
+    public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
+    public final static String ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+    public final static String EXTRA_DATA = "com.example.bluetooth.le.EXTRA_DATA";
+    public final static String ACTION_GATT_DEVICE_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_DEVICE_DISCOVERED";
+    public final static String ACTION_mBluetoothDeviceName = "com.example.bluetooth.le.mBluetoothDevice";
+    public final static String ACTION_mBluetoothDeviceAddress = "com.example.bluetooth.le.mBluetoothDeviceAddress";
+    public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
+    public final static String ACTION_Enable = "com.example.bluetooth.le.ACTION_Enable";
+    public final static String ACTION_Connect_Fail = "com.example.bluetooth.le.ACTION_Connect_Fail";
 
-    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-
-    public final static UUID UUID_NOTIFY_CHARACTERISTIC =
-            UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
-
-    public final static UUID UUID_WRITE_CHARACTERISTIC =
-            UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
+    //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+    public final static UUID UUID_NOTIFY_CHARACTERISTIC =  UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
+    public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
 
     static final String HEXES = "0123456789ABCDEF";
 
@@ -118,30 +102,29 @@ public class BluetoothLeService extends Service {
      **********************************************************/
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-
+            new BluetoothAdapter.LeScanCallback()
+            {
                 @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-
+                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord)
+                {
                     DidDiscoverDevice(ACTION_GATT_DEVICE_DISCOVERED, device, rssi, scanRecord);
-
                 }
             };
 
-
-    private ScanCallback mScanCallback = new ScanCallback() {
+    private ScanCallback mScanCallback = new ScanCallback()
+    {
         @Override
-        public void onScanResult(int callbackType, ScanResult result) {
+        public void onScanResult(int callbackType, ScanResult result)
+        {
             Log.i("callbackType", String.valueOf(callbackType));
             Log.i("result", result.toString());
             BluetoothDevice Device = result.getDevice();
 
-
-            if (Device != null) {
-
+            if (Device != null)
+            {
                 String DeviceName = Device.getName();
-
-                if (DeviceName == null) {
+                if (DeviceName == null)
+                {
                     DeviceName = "Unknow Device";
                 }
 
@@ -152,68 +135,58 @@ public class BluetoothLeService extends Service {
                 intent.putExtra(ACTION_mBluetoothDeviceAddress, Device.getAddress());
 
                 sendBroadcast(intent);
-
             }
-
         }
 
         @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            for (ScanResult sr : results) {
+        public void onBatchScanResults(List<ScanResult> results)
+        {
+            for (ScanResult sr : results)
+            {
                 Log.i("ScanResult - Results", sr.toString());
             }
         }
 
         @Override
-        public void onScanFailed(int errorCode) {
+        public void onScanFailed(int errorCode)
+        {
             Log.e("Scan Failed", "Error Code: " + errorCode);
         }
     };
 
-
-    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback()
+    {
         // BLE Connection Change
         @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState)
+        {
+            String  intentAction;
+            String  address = gatt.getDevice().getAddress();
 
-            String intentAction;
-
-            String address = gatt.getDevice().getAddress();
-
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-
+            if (newState == BluetoothProfile.STATE_CONNECTED)
+            {
                 mConnectionState = STATE_CONNECTED;
-
                 Log.i(TAG, "Connect Sus " + address);
-
                 gatt.discoverServices();
-
                 mBluetoothGattConnected=true;
 
                 intentAction = ACTION_GATT_CONNECTED;
                 broadcastUpdate(intentAction);
-
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                //Device Disconnected
-
+            }
+            else if (newState == BluetoothProfile.STATE_DISCONNECTED)
+            {   //Device Disconnected
                 intentAction = ACTION_GATT_DISCONNECTED;
-
                 mBluetoothGattConnected=false;
-
                 gatt.close();
 
-                if (mConnectionState==STATE_CONNECTING) {
-
+                if (mConnectionState==STATE_CONNECTING)
+                {
                     mConnectionState = STATE_DISCONNECTED;
                     Log.d(TAG, "Disconnect Fail");
-
                     handler.removeCallbacks(TimeOUTCheckTimer);
 
                     intentAction = ACTION_Connect_Fail;
                     broadcastUpdate(intentAction);
-
-
                 }
                 else{
 
@@ -323,6 +296,7 @@ public class BluetoothLeService extends Service {
         // carried out as per profile specifications:
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
 
+        /*
         if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
             int flag = characteristic.getProperties();
             int format = -1;
@@ -336,23 +310,26 @@ public class BluetoothLeService extends Service {
             final int heartRate = characteristic.getIntValue(format, 1);
             Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else {
+        } else
+        */
+        //{
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
 
             if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for (byte byteChar : data)
-                    stringBuilder.append(String.format("%02X", byteChar));
-                intent.putExtra(EXTRA_DATA, stringBuilder.toString());
+                //final StringBuilder stringBuilder = new StringBuilder(data.length);
+                //for (byte byteChar : data)
+                //    stringBuilder.append(String.format("%02X", byteChar));
+                //intent.putExtra(EXTRA_DATA, stringBuilder.toString());
+                intent.putExtra(EXTRA_DATA, (Serializable) data);
+                sendBroadcast(intent);
             }
-        }
-        sendBroadcast(intent);
+        //}
+        //sendBroadcast(intent);
     }
 
-
-
-    public class LocalBinder extends Binder {
+    public class LocalBinder extends Binder
+    {
         BluetoothLeService getService() {
             return BluetoothLeService.this;
         }
@@ -545,7 +522,8 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public void setCharacteristicNotification(BluetoothGatt gatt,BluetoothGattCharacteristic characteristic,
+    public void setCharacteristicNotification(BluetoothGatt gatt,
+                                              BluetoothGattCharacteristic characteristic,
                                               boolean enabled)
     {
         if (mBluetoothAdapter == null || gatt == null) {
@@ -563,12 +541,25 @@ public class BluetoothLeService extends Service {
 
 
     public void writeCharacteristicCMD(byte[] value) {
+    //public void writeCharacteristicC(BluetoothGattCharacteristic characteristic) {
 
-        if (mBluetoothAdapter == null || mBluetoothGatt == null ||!mBluetoothGattConnected) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null || !mBluetoothGattConnected)
+        {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
 
+        /*
+        try
+        {
+            Thread.sleep(200);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        */
+        
         for (BluetoothGattService GattService : mBluetoothGatt.getServices()) {
             List<BluetoothGattCharacteristic> mGattCharacteristics = GattService.getCharacteristics();
             for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics) {
