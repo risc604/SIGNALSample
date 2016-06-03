@@ -4,35 +4,33 @@ package com.esignal.signaldemo;
  * Created by ChiaHao on 2016/1/18.
  */
 
-        import android.annotation.TargetApi;
-        import android.app.Service;
+import android.annotation.TargetApi;
+import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
 
-        import android.bluetooth.BluetoothAdapter;
-        import android.bluetooth.BluetoothDevice;
-        import android.bluetooth.BluetoothGatt;
-        import android.bluetooth.BluetoothGattCallback;
-        import android.bluetooth.BluetoothGattCharacteristic;
-        import android.bluetooth.BluetoothGattDescriptor;
-        import android.bluetooth.BluetoothGattService;
-        import android.bluetooth.BluetoothManager;
-        import android.bluetooth.BluetoothProfile;
-
-        import android.bluetooth.le.BluetoothLeScanner;
-        import android.bluetooth.le.ScanCallback;
-        import android.bluetooth.le.ScanFilter;
-        import android.bluetooth.le.ScanResult;
-        import android.bluetooth.le.ScanSettings;
-        import android.content.Context;
-        import android.content.Intent;
-        import android.os.Binder;
-        import android.os.Build;
-        import android.os.Handler;
-        import android.os.IBinder;
-        import android.util.Log;
-
-        import java.io.Serializable;
-        import java.util.List;
-        import java.util.UUID;
+import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -262,7 +260,9 @@ public class BluetoothLeService extends Service
     };
 
 
-    private void broadcastUpdate(final String action) {
+    //private void broadcastUpdate(final String action)
+    public void broadcastUpdate(final String action)
+    {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
@@ -316,14 +316,16 @@ public class BluetoothLeService extends Service
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
 
+        /*
             if (data != null && data.length > 0) {
-                //final StringBuilder stringBuilder = new StringBuilder(data.length);
-                //for (byte byteChar : data)
-                //    stringBuilder.append(String.format("%02X", byteChar));
-                //intent.putExtra(EXTRA_DATA, stringBuilder.toString());
+                final StringBuilder stringBuilder = new StringBuilder(data.length);
+                for (byte byteChar : data)
+                    stringBuilder.append(String.format("%02X", byteChar));
+                intent.putExtra(EXTRA_DATA, stringBuilder.toString());
+          */
                 intent.putExtra(EXTRA_DATA, (Serializable) data);
                 sendBroadcast(intent);
-            }
+            //}
         //}
         //sendBroadcast(intent);
     }
@@ -559,7 +561,7 @@ public class BluetoothLeService extends Service
             e.printStackTrace();
         }
         */
-        
+
         for (BluetoothGattService GattService : mBluetoothGatt.getServices()) {
             List<BluetoothGattCharacteristic> mGattCharacteristics = GattService.getCharacteristics();
             for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics) {
@@ -572,7 +574,7 @@ public class BluetoothLeService extends Service
     }
 
 
-
+    /*
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len/2];
@@ -584,6 +586,7 @@ public class BluetoothLeService extends Service
 
         return data;
     }
+    */
 
     public static String getHexToString(byte[] raw) {
         if (raw == null) {

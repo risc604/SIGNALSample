@@ -16,16 +16,18 @@ public class Utils
     {
         Calendar mCal = Calendar.getInstance();
         //final int   cmdLength=12;
-        byte[]  cmdByte = {0x4d, (byte)0xfe, 0x00, 0x04, (byte)fnCMDByte
-                ,(byte)(mCal.get(Calendar.YEAR)-2000)
-                ,(byte)(mCal.get(Calendar.MONTH)+1)
-                ,(byte)(mCal.get(Calendar.DATE))
-                ,(byte)(mCal.get(Calendar.HOUR))
-                ,(byte)(mCal.get(Calendar.MINUTE))
-                ,(byte)(mCal.get(Calendar.SECOND))
-                ,0x00, 0x00
+        byte[]  cmdByte = {0x4d, (byte)0xfe, 0x00, 0x08, (byte)fnCMDByte
+                //,(byte)(mCal.get(Calendar.YEAR)-2000)
+                //,(byte)(mCal.get(Calendar.MONTH)+1)
+                //,(byte)(mCal.get(Calendar.DATE))
+                //,(byte)(mCal.get(Calendar.HOUR))
+                //,(byte)(mCal.get(Calendar.MINUTE))
+                //,(byte)(mCal.get(Calendar.SECOND))
+                //,0x00
+                ,0x00
         };
 
+        cmdByte[3] = (byte) cmdByte.length;
         byte sum = 0;
         for (int i=0; i<cmdByte.length-1; i++)
         {

@@ -24,6 +24,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -133,7 +134,8 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED.equals(action))
             {
@@ -382,11 +384,42 @@ public class MainActivity extends AppCompatActivity
         if(!mBluetoothLeService.mBluetoothGattConnected)
             return;
 
-        byte[] testCommand;
-        testCommand = Utils.mlcTestCommand((byte) 0xA1);
-
+        byte[] testCommand = Utils.mlcTestCommand((byte) 0xA0);
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
+        //mBluetoothLeService.
+        //mBluetoothLeService.writeCharacteristicCMD(Utils.mlcTestCommand((byte) 0xA0));
+        Log.d("cmd ", "Write Command to device.");
+
+        LogDebugShow("Command", testCommand);   //debug.
         InsertMessage(testCommand.toString());
+    }
+
+    private void LogDebugShow(String info, byte[] data)
+    {
+        for (int i=0;i<data.length; i++)
+        {
+            Log.d(info, " data [" + i + "]= " + String.format("0x%02X",data[i]));
+        }
+    }
+
+    private void displayData(byte[] data)
+    {
+        //byte[] byteArray = hexStringToByteArray(data);
+        if ((data.length>0) && (data != null))
+        {
+            switch (data[0])
+            {
+                case 0x4d:
+                    byte[] tmp= {(byte) 0x81};
+                    mBluetoothLeService.writeCharacteristicCMD(tmp);
+                    mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                    break;
+
+                default:
+                    break;
+
+            }
+        }
     }
 
     /*
@@ -407,9 +440,12 @@ public class MainActivity extends AppCompatActivity
     }
     */
 
+    /*
     private void displayData(String data)
     {
         byte[] byteArray = hexStringToByteArray(data);
+
+        Log.d("display Data", "device: " + data);
         if (data != null)
         {
             if(OpenDialog)
@@ -418,8 +454,11 @@ public class MainActivity extends AppCompatActivity
                 progressDialog.cancel();
             }
             InsertMessage("Receive: "+data);
+            InsertMessage("Receive: " + byteArray);
+            LogDebugShow("display 2 Data ", byteArray);
         }
     }
+    */
 
     @Override
     public void onStop()
@@ -479,6 +518,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /*
     public static byte[] hexStringToByteArray(String s)
     {
         int getLength = s.length() % 2;
@@ -498,6 +538,7 @@ public class MainActivity extends AppCompatActivity
         }
         return data;
     }
+    */
 
     private void OpenDialog(String Title, String Meaasge)
     {
