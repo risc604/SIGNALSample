@@ -44,6 +44,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.esignal.signaldemo.BluetoothLeService.hexStringToByteArray;
+
 public class MainActivity extends AppCompatActivity
 {
     private BluetoothAdapter mBluetoothAdapter;
@@ -134,8 +136,8 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
+                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                //displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED.equals(action))
             {
@@ -146,7 +148,7 @@ public class MainActivity extends AppCompatActivity
             {
                 progressDialog.setMessage("Connected");
                 //Notify Enabled & Send Command to BLE Device
-                CommandTest();
+                //CommandTest();
             }
             else if (BluetoothLeService.ACTION_Connect_Fail.equals(action))
             {}
@@ -384,14 +386,15 @@ public class MainActivity extends AppCompatActivity
         if(!mBluetoothLeService.mBluetoothGattConnected)
             return;
 
-        byte[] testCommand = Utils.mlcTestCommand((byte) 0xA0);
+        byte[] testCommand = Utils.mlcTestCommand((byte) 0x81);
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
         //mBluetoothLeService.
         //mBluetoothLeService.writeCharacteristicCMD(Utils.mlcTestCommand((byte) 0xA0));
         Log.d("cmd ", "Write Command to device.");
 
         LogDebugShow("Command", testCommand);   //debug.
-        InsertMessage(testCommand.toString());
+        String tmp = new String(testCommand);   //debug
+        InsertMessage(tmp);
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -402,11 +405,16 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /*
     private void displayData(byte[] data)
     {
         //byte[] byteArray = hexStringToByteArray(data);
+
         if ((data.length>0) && (data != null))
         {
+            LogDebugShow("dD()", data);
+            InsertMessage(String.valueOf(data));
+
             switch (data[0])
             {
                 case 0x4d:
@@ -421,6 +429,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
+    */
 
     /*
     private void CommandTest()
@@ -440,25 +449,37 @@ public class MainActivity extends AppCompatActivity
     }
     */
 
-    /*
+
     private void displayData(String data)
     {
-        byte[] byteArray = hexStringToByteArray(data);
-
-        Log.d("display Data", "device: " + data);
         if (data != null)
         {
+            byte[] byteArray = hexStringToByteArray(data);
+
+
+            Log.d("display Data", "device: " + data);
+
+            if (byteArray[0] == 'M')
+            {
+                //byte[] tmp = {(byte) 0x81};
+                //mBluetoothLeService.writeCharacteristicCMD(tmp);
+                CommandTest();
+                mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+            }
             if(OpenDialog)
             {
                 OpenDialog = false;
                 progressDialog.cancel();
             }
             InsertMessage("Receive: "+data);
-            InsertMessage("Receive: " + byteArray);
+            String tmp = new String(byteArray);
+            InsertMessage("Byte: " + tmp);
             LogDebugShow("display 2 Data ", byteArray);
+
+            //if ((byteArray[0] == 'M') && (byteArray[3]))
         }
     }
-    */
+
 
     @Override
     public void onStop()
@@ -484,6 +505,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v)
             {
                 scanLeDevice(false);
+                //mDataText.setText("");
                 dismissPopupWindow();
             }
         });
@@ -495,6 +517,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 dismissPopupWindow();
+                mDataText.setText("");
                 OpenDialog("BLE Status", "Try to connect with device...");
                 scanLeDevice(false);
                 mBluetoothLeService.connect(mLeDeviceListAdapter.getDevice(position));
@@ -570,6 +593,7 @@ public class MainActivity extends AppCompatActivity
     private void InsertMessage(String Message)
     {
         mDataText.setText(mDataText.getText()+Message+"\r\n");
+        //mDataText.append(Message);
         mScroller.fullScroll(ScrollView.FOCUS_DOWN);
     }
 

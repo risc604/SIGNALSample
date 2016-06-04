@@ -58,7 +58,7 @@
             android:background="#bebebe"
             android:layout_above="@+id/linearLayout2"
             android:layout_alignParentStart="true"
-            android:id="@+id/Scroller">
+            android:id="@+id/Scroller" android:fillViewport="false">
 
             <TextView
                 android:layout_width="fill_parent"

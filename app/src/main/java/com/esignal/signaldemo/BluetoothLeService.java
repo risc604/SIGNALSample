@@ -28,7 +28,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,28 +85,24 @@ public class BluetoothLeService extends Service
     public final static UUID UUID_NOTIFY_CHARACTERISTIC =  UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
     public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
 
+    private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
     static final String HEXES = "0123456789ABCDEF";
-
     private Handler handler = new Handler();
 
-    private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
 
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
-
     /**********************************************************
      * 發現週邊藍芽裝置
      **********************************************************/
-
-    private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback()
-            {
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord)
-                {
-                    DidDiscoverDevice(ACTION_GATT_DEVICE_DISCOVERED, device, rssi, scanRecord);
-                }
-            };
+    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback()
+    {
+        @Override
+        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord)
+        {
+            DidDiscoverDevice(ACTION_GATT_DEVICE_DISCOVERED, device, rssi, scanRecord);
+        }
+    };
 
     private ScanCallback mScanCallback = new ScanCallback()
     {
@@ -186,79 +181,71 @@ public class BluetoothLeService extends Service
                     intentAction = ACTION_Connect_Fail;
                     broadcastUpdate(intentAction);
                 }
-                else{
-
+                else
+                {
                     Log.i(TAG, "Disconnected from GATT server.");
                     broadcastUpdate(intentAction);
                 }
-
-
             }
         }
 
         @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-
-
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-
+        public void onServicesDiscovered(BluetoothGatt gatt, int status)
+        {
+            if (status == BluetoothGatt.GATT_SUCCESS)
+            {
                 handler.removeCallbacks(TimeOUTCheckTimer);
-
                 Log.i(TAG, "Discover Service");
-
                 mBluetoothGattServiceDiscover = true;
 
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
-
                 NotifyEnable(gatt);
 
-
-            } else {
+            }
+            else
+            {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
-
-
             }
         }
 
 
         @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                          BluetoothGattCharacteristic characteristic,
+                                          int status)
+        {
             //   Log.i(TAG, "Write OVer");
-
-
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
-                                         int status) {
-
-            if (status == BluetoothGatt.GATT_SUCCESS) {
+                                         int status)
+        {
+            if (status == BluetoothGatt.GATT_SUCCESS)
+            {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-
             }
         }
+
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
-                                            BluetoothGattCharacteristic characteristic) {
-
-
+                                            BluetoothGattCharacteristic characteristic)
+        {
             final byte[] data = characteristic.getValue();
-
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
         @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-
-            Log.i(TAG, "characteristic uuid = " + descriptor.getCharacteristic().getUuid().toString() + descriptor.getValue());
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status)
+        {
+            Log.i(TAG, "characteristic uuid = " +
+                    descriptor.getCharacteristic().getUuid().toString() + descriptor.getValue());
 
             final Intent intent = new Intent(ACTION_Enable);
-
             intent.putExtra(ACTION_Enable, descriptor.getCharacteristic().getUuid().toString());
             sendBroadcast(intent);
         }
     };
-
 
     //private void broadcastUpdate(final String action)
     public void broadcastUpdate(final String action)
@@ -268,10 +255,11 @@ public class BluetoothLeService extends Service
     }
 
     private void DidDiscoverDevice(final String action,
-                                   final BluetoothDevice Device, int rssi, byte[] scanRecord) {
-        if (Device != null) {
-
-
+                                   final BluetoothDevice Device,
+                                   int rssi, byte[] scanRecord)
+    {
+        if (Device != null)
+        {
             Log.i(TAG, "DiscoverDevice:" + Device.getAddress());
 
             final StringBuilder stringBuilder = new StringBuilder(scanRecord.length);
@@ -283,7 +271,6 @@ public class BluetoothLeService extends Service
             intent.putExtra(ACTION_mBluetoothDeviceAddress, Device.getAddress());
 
             sendBroadcast(intent);
-
         }
     }
 
@@ -316,18 +303,17 @@ public class BluetoothLeService extends Service
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
 
-        /*
             if (data != null && data.length > 0) {
                 final StringBuilder stringBuilder = new StringBuilder(data.length);
                 for (byte byteChar : data)
                     stringBuilder.append(String.format("%02X", byteChar));
                 intent.putExtra(EXTRA_DATA, stringBuilder.toString());
-          */
-                intent.putExtra(EXTRA_DATA, (Serializable) data);
-                sendBroadcast(intent);
-            //}
+
+                //intent.putExtra(EXTRA_DATA, (Serializable) data);
+                //sendBroadcast(intent);
+            }
         //}
-        //sendBroadcast(intent);
+        sendBroadcast(intent);
     }
 
     public class LocalBinder extends Binder
@@ -574,7 +560,7 @@ public class BluetoothLeService extends Service
     }
 
 
-    /*
+
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len/2];
@@ -586,7 +572,7 @@ public class BluetoothLeService extends Service
 
         return data;
     }
-    */
+    //
 
     public static String getHexToString(byte[] raw) {
         if (raw == null) {
@@ -599,6 +585,7 @@ public class BluetoothLeService extends Service
         }
         return hex.toString();
     }
+    //*/
 
     private Runnable TimeOUTCheckTimer = new Runnable() {
         public void run() {
