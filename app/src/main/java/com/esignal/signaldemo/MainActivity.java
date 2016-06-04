@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.esignal.signaldemo.BluetoothLeService.hexStringToByteArray;
+import static java.lang.String.format;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -393,15 +394,22 @@ public class MainActivity extends AppCompatActivity
         Log.d("cmd ", "Write Command to device.");
 
         LogDebugShow("Command", testCommand);   //debug.
-        String tmp = new String(testCommand);   //debug
-        InsertMessage(tmp);
+        //String tmp = new String(testCommand);   //debug
+        //InsertMessage(tmp);
+        StringBuilder sb= new StringBuilder(testCommand.length);
+        for (byte indx: testCommand)
+        {
+            sb.append(format("%02X", indx));
+        }
+        InsertMessage(sb.toString());
+
     }
 
     private void LogDebugShow(String info, byte[] data)
     {
         for (int i=0;i<data.length; i++)
         {
-            Log.d(info, " data [" + i + "]= " + String.format("0x%02X",data[i]));
+            Log.d(info, " data [" + i + "]= " + format("0x%02X",data[i]));
         }
     }
 
@@ -455,26 +463,27 @@ public class MainActivity extends AppCompatActivity
         if (data != null)
         {
             byte[] byteArray = hexStringToByteArray(data);
-
-
             Log.d("display Data", "device: " + data);
 
             if (byteArray[0] == 'M')
             {
+                InsertMessage("Receive: "+data);
                 //byte[] tmp = {(byte) 0x81};
                 //mBluetoothLeService.writeCharacteristicCMD(tmp);
-                CommandTest();
-                mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                //CommandTest();
+                //mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                //Log.d("dD()", "set command.");
             }
+
             if(OpenDialog)
             {
                 OpenDialog = false;
                 progressDialog.cancel();
             }
-            InsertMessage("Receive: "+data);
-            String tmp = new String(byteArray);
-            InsertMessage("Byte: " + tmp);
-            LogDebugShow("display 2 Data ", byteArray);
+
+            //String tmp = new String(byteArray);
+            //InsertMessage("Byte: " + tmp);
+            //LogDebugShow("display 2 Data ", byteArray);
 
             //if ((byteArray[0] == 'M') && (byteArray[3]))
         }
