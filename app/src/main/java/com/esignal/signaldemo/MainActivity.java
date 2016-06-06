@@ -387,7 +387,7 @@ public class MainActivity extends AppCompatActivity
         if(!mBluetoothLeService.mBluetoothGattConnected)
             return;
 
-        byte[] testCommand = Utils.mlcTestCommand((byte) 0x81);
+        byte[] testCommand = Utils.mlcTestCommand((byte) 0x01);
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
         //mBluetoothLeService.
         //mBluetoothLeService.writeCharacteristicCMD(Utils.mlcTestCommand((byte) 0xA0));
@@ -467,7 +467,13 @@ public class MainActivity extends AppCompatActivity
 
             if (byteArray[0] == 'M')
             {
-                InsertMessage("Receive: "+data);
+                InsertMessage("#>"+data);
+                if (byteArray[4] == 0xA0)
+                {
+                    byte[] tmpACK= {0x4D, (byte) 0xFE, 0x00, 0x02, (byte) 0x81, (byte) 0xCE};
+                    mBluetoothLeService.writeCharacteristicCMD(tmpACK);
+                    mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                }
                 //byte[] tmp = {(byte) 0x81};
                 //mBluetoothLeService.writeCharacteristicCMD(tmp);
                 //CommandTest();
