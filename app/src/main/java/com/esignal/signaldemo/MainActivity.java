@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_ENABLE_BT = 1;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
+    //byte[] receiveTmp = new byte[];
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -235,10 +236,11 @@ public class MainActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        //int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings)
+        //if (id == R.id.action_settings)
+        if (item.getItemId() == R.id.action_settings)
         {
             return false;
         }
@@ -496,11 +498,26 @@ public class MainActivity extends AppCompatActivity
                 InsertMessage("Rev:" + data);
                 Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": " + mBluetoothLeService.mBluetoothGattConnected);
 
-                if ((byteArray[4] == 0xA0) && (mBluetoothLeService.mBluetoothGattConnected) )
+                //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
+                switch (byteArray[4])
                 {
-                    A0ReciveList.add(byteArray);
-                    LogDebugShow("Dd()", byteArray);
-                    Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
+                    case (byte) 0xA0:
+                        Log.d("Dd()", "add receive data to Linked List.");
+                        if (A0ReciveList.size()>0)
+                        {
+                            if (!A0ReciveList.get(A0ReciveList.size()-1).equals(byteArray))
+                            {
+                                A0ReciveList.add(byteArray);
+                            }
+                        }
+                        else
+                            A0ReciveList.add(byteArray);
+                        LogDebugShow("Dd()", byteArray);
+                        Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
+                        break;
+
+                    default:
+                        break;
                 }
 
                 //byte[] tmp = {(byte) 0x81};
