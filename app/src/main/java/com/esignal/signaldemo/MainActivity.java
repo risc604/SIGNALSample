@@ -42,6 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.esignal.signaldemo.BluetoothLeService.hexStringToByteArray;
@@ -56,7 +57,8 @@ public class MainActivity extends AppCompatActivity
     private Context mContext;
     private PopupWindow mPopupWindow;
     private ProgressDialog progressDialog;
-    private Button SendButton;
+    private Button Btn_A0ack;
+    private Button Btn_A1ack;
     private TextView mDataText;
     private TextView mConnect;
     private ScrollView mScroller;
@@ -71,6 +73,8 @@ public class MainActivity extends AppCompatActivity
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
+
+    List<byte[]>    A0ReciveList = new LinkedList<>();
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -163,7 +167,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mContext = this.getApplicationContext();
 
-        SendButton = (Button) findViewById(R.id.button);
+        Btn_A0ack = (Button) findViewById(R.id.btn_A0ack);
+        Btn_A1ack = (Button) findViewById(R.id.btn_A1ack);
         mDataText = (TextView) findViewById(R.id.DataText);
         mScroller = (ScrollView) findViewById(R.id.Scroller);
         mConnect = (TextView) findViewById(R.id.textView);
@@ -303,6 +308,8 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
 
+        A0ReciveList.clear();
+
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (!mBluetoothAdapter.isEnabled())
@@ -372,9 +379,14 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void SendData(View v)
+    public void cmdA1ack(View v)    // for Button A1ack onClick()
     {
-        CommandTest();
+        CommandTest((byte) 0xA1);
+    }
+
+    public void cmdA0ack(View v)    // for Button A0ack onClick()
+    {
+        CommandTest((byte) 0xA0);
     }
 
     private void displayGattServices(List<BluetoothGattService> gattServices)
@@ -382,18 +394,33 @@ public class MainActivity extends AppCompatActivity
         if (gattServices == null) return;
     }
 
-    private void CommandTest()
+    private void CommandTest(byte command)
     {
+        byte[] testCommand = new byte[0];
+
         if(!mBluetoothLeService.mBluetoothGattConnected)
             return;
 
-        byte[] testCommand = Utils.mlcTestCommand((byte) 0x01);
+        switch ((byte)command)
+        {
+            case (byte) 0xA0:
+                testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x02, (byte) 0x81, (byte) 0xCE};
+                break;
+
+            case (byte) 0xA1:
+                testCommand = Utils.mlcTestCommand((byte)0x01);
+                break;
+
+            default:
+                break;
+        }
+        //byte[] testCommand = Utils.mlcTestCommand(command);
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
         //mBluetoothLeService.
         //mBluetoothLeService.writeCharacteristicCMD(Utils.mlcTestCommand((byte) 0xA0));
-        Log.d("cmd ", "Write Command to device.");
+        Log.d("Cmd ", "Write Command to device.");
 
-        LogDebugShow("Command", testCommand);   //debug.
+        //LogDebugShow("Command", testCommand);   //debug.
         //String tmp = new String(testCommand);   //debug
         //InsertMessage(tmp);
         StringBuilder sb= new StringBuilder(testCommand.length);
@@ -401,8 +428,8 @@ public class MainActivity extends AppCompatActivity
         {
             sb.append(format("%02X", indx));
         }
-        InsertMessage(sb.toString());
-
+        Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
+        InsertMessage("Cmd:" + sb.toString());
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -457,7 +484,6 @@ public class MainActivity extends AppCompatActivity
     }
     */
 
-
     private void displayData(String data)
     {
         if (data != null)
@@ -467,13 +493,16 @@ public class MainActivity extends AppCompatActivity
 
             if (byteArray[0] == 'M')
             {
-                InsertMessage("#>"+data);
-                if (byteArray[4] == 0xA0)
+                InsertMessage("Rev:" + data);
+                Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": " + mBluetoothLeService.mBluetoothGattConnected);
+
+                if ((byteArray[4] == 0xA0) && (mBluetoothLeService.mBluetoothGattConnected) )
                 {
-                    byte[] tmpACK= {0x4D, (byte) 0xFE, 0x00, 0x02, (byte) 0x81, (byte) 0xCE};
-                    mBluetoothLeService.writeCharacteristicCMD(tmpACK);
-                    mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                    A0ReciveList.add(byteArray);
+                    LogDebugShow("Dd()", byteArray);
+                    Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                 }
+
                 //byte[] tmp = {(byte) 0x81};
                 //mBluetoothLeService.writeCharacteristicCMD(tmp);
                 //CommandTest();
