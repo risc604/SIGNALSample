@@ -458,50 +458,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /*
-    private void displayData(byte[] data)
-    {
-        //byte[] byteArray = hexStringToByteArray(data);
-
-        if ((data.length>0) && (data != null))
-        {
-            LogDebugShow("dD()", data);
-            InsertMessage(String.valueOf(data));
-
-            switch (data[0])
-            {
-                case 0x4d:
-                    byte[] tmp= {(byte) 0x81};
-                    mBluetoothLeService.writeCharacteristicCMD(tmp);
-                    mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-                    break;
-
-                default:
-                    break;
-
-            }
-        }
-    }
-    */
-
-    /*
-    private void CommandTest()
-    {
-        if(!mBluetoothLeService.mBluetoothGattConnected)return;
-
-        byte[]SendByte=new byte[5];
-
-        SendByte[0] = (byte) 0x01;
-        SendByte[1] = (byte) 0x02;
-        SendByte[2] = (byte) 0x03;
-        SendByte[3] = (byte) 0x04;
-        SendByte[4] = (byte) 0x05;
-
-        mBluetoothLeService.writeCharacteristicCMD(SendByte);
-        InsertMessage("Send 0x01,0x02,0x03,0x04,0x05");
-    }
-    */
-
     private void displayData(String data)
     {
         if (data != null)
@@ -620,12 +576,20 @@ public class MainActivity extends AppCompatActivity
 
     private void ambient(byte dataH, byte dataL)
     {
-
+        int     tmpValue=0;
+        tmpValue |= (int) dataH;
+        tmpValue <<= 8;
+        tmpValue |= (int) dataL;
+        InsertMessage("ambient: " + tmpValue + "℃");
     }
 
     private void measure(byte dataH, byte dataL)
     {
-
+        int     tmpValue=0;
+        tmpValue |= (int) dataH;
+        tmpValue <<= 8;
+        tmpValue |= (int) dataL;
+        InsertMessage("measure: " + tmpValue + "℃");
     }
 
     private void measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
@@ -638,6 +602,7 @@ public class MainActivity extends AppCompatActivity
         tmpMonth = (byte) (mHour & 0xC0);
         tmpMonth >>= 2;
         tmpMonth |= (byte) (mDay & 0xC0);
+        tmpMonth >>= 4;
 
         InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
