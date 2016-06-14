@@ -562,7 +562,7 @@ public class BluetoothLeService extends Service
         }
     }
 
-
+    /*
     public static byte[] hexStringToByteArray(String s)
     {
         int len = s.length();
@@ -575,7 +575,7 @@ public class BluetoothLeService extends Service
 
         return data;
     }
-    //
+    */
 
     public static String getHexToString(byte[] raw)
     {

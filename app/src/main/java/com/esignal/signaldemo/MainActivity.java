@@ -44,8 +44,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.esignal.signaldemo.BluetoothLeService.hexStringToByteArray;
 import static java.lang.String.format;
 
 public class MainActivity extends AppCompatActivity
@@ -432,15 +430,9 @@ public class MainActivity extends AppCompatActivity
             default:
                 break;
         }
-        //byte[] testCommand = Utils.mlcTestCommand(command);
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
-        //mBluetoothLeService.
-        //mBluetoothLeService.writeCharacteristicCMD(Utils.mlcTestCommand((byte) 0xA0));
         Log.d("Cmd ", "Write Command to device.");
 
-        //LogDebugShow("Command", testCommand);   //debug.
-        //String tmp = new String(testCommand);   //debug
-        //InsertMessage(tmp);
         StringBuilder sb= new StringBuilder(testCommand.length);
         for (byte indx: testCommand)
         {
@@ -675,7 +667,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /*
     public static byte[] hexStringToByteArray(String s)
     {
         int getLength = s.length() % 2;
@@ -695,7 +686,6 @@ public class MainActivity extends AppCompatActivity
         }
         return data;
     }
-    */
 
     private void OpenDialog(String Title, String Meaasge)
     {
