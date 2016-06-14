@@ -54,28 +54,30 @@ public class MainActivity extends AppCompatActivity
     private BluetoothLeService mBluetoothLeService;
     private LeDeviceListAdapter mLeDeviceListAdapter;
 
-    private Context mContext;
-    private PopupWindow mPopupWindow;
-    private ProgressDialog progressDialog;
-    private Button Btn_A0ack;
-    private Button Btn_A1ack;
-    private TextView mDataText;
-    private TextView mConnect;
-    private ScrollView mScroller;
+    Context         mContext;
+    PopupWindow     mPopupWindow;
+    ProgressDialog  progressDialog;
+    Button      Btn_A0ack;
+    Button      Btn_A1ack;
+    TextView    mDataText;
+    TextView    mConnect;
+    ScrollView  mScroller;
 
     private Handler handler = new Handler();
-    private boolean mScanning;
-    private boolean mInitialFinished = false;
+    boolean mScanning;
+    boolean mInitialFinished = false;
     private boolean OpenDialog = false;
-    private boolean SearchBLE = false;
-    private boolean BLUETOOTH_ENABLE = false;
-    private boolean BLUETOOTH_RECONNECT = false;
+    boolean SearchBLE = false;
+    boolean BLUETOOTH_ENABLE = false;
+    boolean BLUETOOTH_RECONNECT = false;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
+    static final float  adResolution = (float) 0.02;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
-    //byte[] receiveTmp = new byte[];
+    private byte[] receiveTmp = new byte[14];
+
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -134,6 +136,16 @@ public class MainActivity extends AppCompatActivity
                     OpenDialog=false;
                     progressDialog.dismiss();
                 }
+
+                if (A0ReciveList.size()>0) //debug
+                {
+                    for (int i=0; i<A0ReciveList.size(); i++)
+                    {
+                        //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
+                        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
+                    }
+                }
+
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {
@@ -143,6 +155,7 @@ public class MainActivity extends AppCompatActivity
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+
                 //displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED.equals(action))
@@ -191,6 +204,7 @@ public class MainActivity extends AppCompatActivity
             finish();
         }
 
+        //receiveTmp=null;
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         startService(gattServiceIntent);
@@ -502,29 +516,21 @@ public class MainActivity extends AppCompatActivity
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
-                        Log.d("Dd()", "add receive data to Linked List.");
-                        if (A0ReciveList.size()>0)
+                        Log.d("dD()", "A0 Command found.");
+                        if (!java.util.Arrays.equals(receiveTmp, byteArray))
                         {
-                            if (!A0ReciveList.get(A0ReciveList.size()-1).equals(byteArray))
-                            {
-                                A0ReciveList.add(byteArray);
-                            }
-                        }
-                        else
+                            Log.d("dD()", "Add new receive data to List.");
                             A0ReciveList.add(byteArray);
-                        LogDebugShow("Dd()", byteArray);
+                            receiveTmp = byteArray.clone();
+                            LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                        }
+
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                         break;
 
                     default:
                         break;
                 }
-
-                //byte[] tmp = {(byte) 0x81};
-                //mBluetoothLeService.writeCharacteristicCMD(tmp);
-                //CommandTest();
-                //mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-                //Log.d("dD()", "set command.");
             }
 
             if(OpenDialog)

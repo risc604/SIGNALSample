@@ -275,8 +275,8 @@ public class BluetoothLeService extends Service
     }
 
     private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
-
+                                 final BluetoothGattCharacteristic characteristic)
+    {
         final Intent intent = new Intent(action);
 
         // This is special handling for the Heart Rate Measurement profile.  Data parsing is
@@ -303,7 +303,8 @@ public class BluetoothLeService extends Service
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
 
-            if (data != null && data.length > 0) {
+            if (data != null && data.length > 0)
+            {
                 final StringBuilder stringBuilder = new StringBuilder(data.length);
                 for (byte byteChar : data)
                     stringBuilder.append(String.format("%02X", byteChar));
@@ -318,18 +319,21 @@ public class BluetoothLeService extends Service
 
     public class LocalBinder extends Binder
     {
-        BluetoothLeService getService() {
+        BluetoothLeService getService()
+        {
             return BluetoothLeService.this;
         }
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
+    public IBinder onBind(Intent intent)
+    {
         return mBinder;
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public boolean onUnbind(Intent intent)
+    {
         // After using a given device, you should make sure that BluetoothGatt.close() is called
         // such that resources are cleaned up properly.  In this particular example, close() is
         // invoked when the UI is disconnected from the Service.
@@ -344,15 +348,16 @@ public class BluetoothLeService extends Service
      *
      * @return Return true if the initialization is successful.
      */
-    public boolean initialize() {
+    public boolean initialize()
+    {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
 
-
-        if (mBluetoothManager == null) {
+        if (mBluetoothManager == null)
+        {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-
-            if (mBluetoothManager == null) {
+            if (mBluetoothManager == null)
+            {
                 Log.e(TAG, "Unable to initialize BluetoothManager.");
                 return false;
             } else {
@@ -362,7 +367,8 @@ public class BluetoothLeService extends Service
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
-        if (mBluetoothAdapter == null) {
+        if (mBluetoothAdapter == null)
+        {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;
         }
@@ -384,10 +390,10 @@ public class BluetoothLeService extends Service
     /**********************************************************
      * 對裝置下達連線
      **********************************************************/
-    public boolean connect(final String address) {
-
-
-        if (mBluetoothAdapter == null || address == null ||mBluetoothGattConnected) {
+    public boolean connect(final String address)
+    {
+        if (mBluetoothAdapter == null || address == null || mBluetoothGattConnected)
+        {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;
         }
@@ -397,28 +403,26 @@ public class BluetoothLeService extends Service
         mConnectionState = STATE_CONNECTING;
         mBluetoothGattAddress = address;
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-
         Log.w(TAG, "Trying to Connect with " + mBluetoothGattAddress);
 
         //Connect Time Out Check  6 second
         handler.postDelayed(TimeOUTCheckTimer, BLE_CONNECT_TIMEOUT);
 
-
         return true;
-
     }
 
     public void ScanDevice(final boolean enable)
     {
-        if(enable){
-
-            if (Build.VERSION.SDK_INT < 23) {
+        if(enable)
+        {
+            if (Build.VERSION.SDK_INT < 23)
+            {
                 mBluetoothAdapter.startLeScan(mLeScanCallback);
             }
-            else {
-
-                if(mBluetoothScanner==null) {
-
+            else
+            {
+                if(mBluetoothScanner==null)
+                {
                     mBluetoothScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
                     ScanSettings.Builder scanSettingsBuilder = new ScanSettings.Builder();
                     scanSettingsBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
@@ -428,22 +432,20 @@ public class BluetoothLeService extends Service
                     filters = new ArrayList<ScanFilter>();
                     filters.add(filter);*/
                 }
-
                 mBluetoothScanner.startScan(filters, scanSettings, mScanCallback);
-
             }
-
         }
-        else {
-
-            if (Build.VERSION.SDK_INT < 23) {
+        else
+        {
+            if (Build.VERSION.SDK_INT < 23)
+            {
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
             }
-            else {
+            else
+            {
                 mBluetoothScanner.stopScan(mScanCallback);
             }
         }
-
     }
 
     /**
@@ -462,48 +464,47 @@ public class BluetoothLeService extends Service
         }
 
         ScanDevice(false);
-
         mBluetoothAdapter.cancelDiscovery();
         mConnectionState=STATE_DISCONNECTED;
         if(mBluetoothGatt != null) mBluetoothGatt.disconnect();
-
     }
 
     public void close()
     {
         if(mBluetoothGatt != null) mBluetoothGatt.close();
 
-
         mBluetoothGatt = null;
         mBluetoothGattAddress=null;
         mBluetoothGattConnected=false;
 
         if(handler!=null)handler.removeCallbacks(TimeOUTCheckTimer);
-
     }
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic,BluetoothGatt Gatt)
     {
-        if (mBluetoothAdapter == null || Gatt == null) {
+        if (mBluetoothAdapter == null || Gatt == null)
+        {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-
         Gatt.readCharacteristic(characteristic);
     }
 
     public void NotifyEnable(BluetoothGatt gatt)
     {
-
-        if (mBluetoothAdapter == null || gatt == null) {
+        if (mBluetoothAdapter == null || gatt == null)
+        {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
 
-        for (BluetoothGattService GattService : gatt.getServices()) {
+        for (BluetoothGattService GattService : gatt.getServices())
+        {
             List<BluetoothGattCharacteristic> mGattCharacteristics = GattService.getCharacteristics();
-            for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics) {
-                if (UUID_NOTIFY_CHARACTERISTIC.equals(mCharacteristic.getUuid())){
+            for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics)
+            {
+                if (UUID_NOTIFY_CHARACTERISTIC.equals(mCharacteristic.getUuid()))
+                {
                     setCharacteristicNotification(gatt,mCharacteristic, true);
                 }
             }
@@ -514,8 +515,8 @@ public class BluetoothLeService extends Service
                                               BluetoothGattCharacteristic characteristic,
                                               boolean enabled)
     {
-        if (mBluetoothAdapter == null || gatt == null) {
-
+        if (mBluetoothAdapter == null || gatt == null)
+        {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
@@ -527,10 +528,9 @@ public class BluetoothLeService extends Service
         gatt.writeDescriptor(descriptor);
     }
 
-
-    public void writeCharacteristicCMD(byte[] value) {
-    //public void writeCharacteristicC(BluetoothGattCharacteristic characteristic) {
-
+    //public void writeCharacteristicC(BluetoothGattCharacteristic characteristic)
+    public void writeCharacteristicCMD(byte[] value)
+    {
         if (mBluetoothAdapter == null || mBluetoothGatt == null || !mBluetoothGattConnected)
         {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -548,10 +548,13 @@ public class BluetoothLeService extends Service
         }
         */
 
-        for (BluetoothGattService GattService : mBluetoothGatt.getServices()) {
+        for (BluetoothGattService GattService : mBluetoothGatt.getServices())
+        {
             List<BluetoothGattCharacteristic> mGattCharacteristics = GattService.getCharacteristics();
-            for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics) {
-                if (UUID_WRITE_CHARACTERISTIC.equals(mCharacteristic.getUuid())) {
+            for (BluetoothGattCharacteristic mCharacteristic : mGattCharacteristics)
+            {
+                if (UUID_WRITE_CHARACTERISTIC.equals(mCharacteristic.getUuid()))
+                {
                     mCharacteristic.setValue(value);
                     mBluetoothGatt.writeCharacteristic(mCharacteristic);
                 }
@@ -560,26 +563,29 @@ public class BluetoothLeService extends Service
     }
 
 
-
-    public static byte[] hexStringToByteArray(String s) {
+    public static byte[] hexStringToByteArray(String s)
+    {
         int len = s.length();
         byte[] data = new byte[len/2];
 
-        for(int i = 0; i < len; i+=2){
+        for(int i = 0; i < len; i+=2)
+        {
             data[i/2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i+1), 16));
-
         }
 
         return data;
     }
     //
 
-    public static String getHexToString(byte[] raw) {
-        if (raw == null) {
+    public static String getHexToString(byte[] raw)
+    {
+        if (raw == null)
+        {
             return null;
         }
         final StringBuilder hex = new StringBuilder(2 * raw.length);
-        for (final byte b : raw) {
+        for (final byte b : raw)
+        {
             hex.append(HEXES.charAt((b & 0xF0) >> 4))
                     .append(HEXES.charAt((b & 0x0F)));
         }
@@ -587,14 +593,14 @@ public class BluetoothLeService extends Service
     }
     //*/
 
-    private Runnable TimeOUTCheckTimer = new Runnable() {
-        public void run() {
-
+    private Runnable TimeOUTCheckTimer = new Runnable()
+    {
+        public void run()
+        {
             mConnectionState = STATE_DISCONNECTED;
             mBluetoothAdapter.cancelDiscovery();
-
-            if(mBluetoothGatt!=null) {
-
+            if(mBluetoothGatt!=null)
+            {
                 mBluetoothGatt.disconnect();
                 mBluetoothGatt = null;
                 mConnectionState = STATE_DISCONNECTED;
@@ -608,12 +614,6 @@ public class BluetoothLeService extends Service
             handler.removeCallbacks(TimeOUTCheckTimer);
         }
     };
-
-
-
-
-
-
 
 
 }

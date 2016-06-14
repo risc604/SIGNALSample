@@ -24,11 +24,10 @@ public class SampleGattAttributes
         attributes.put("GetInfomation", "GetInfomation");
         attributes.put("SetNotifiable", "SetNotifiable");
         attributes.put("SendCommand", "SendCommand");
-
-
     }
 
-    public static String lookup(String uuid, String defaultName) {
+    public static String lookup(String uuid, String defaultName)
+    {
         String name = attributes.get(uuid);
         return name == null ? defaultName : name;
     }
