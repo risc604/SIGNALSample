@@ -76,7 +76,8 @@ public class MainActivity extends AppCompatActivity
     static final float  adResolution = (float) 0.02;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
-    private byte[] receiveTmp = new byte[14];
+    private byte[] A0Tmp = new byte[14];
+    private byte[] A1Tmp = new byte[8];
 
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
@@ -137,14 +138,15 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.dismiss();
                 }
 
-                if (A0ReciveList.size()>0) //debug
-                {
-                    for (int i=0; i<A0ReciveList.size(); i++)
-                    {
-                        //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
-                        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
-                    }
-                }
+                parserData(A0ReciveList);
+                //if (A0ReciveList.size()>0) //debug
+                //{
+                //    for (int i=0; i<A0ReciveList.size(); i++)
+                //    {
+                //        //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
+                //        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
+                //    }
+                //}
 
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
@@ -517,15 +519,26 @@ public class MainActivity extends AppCompatActivity
                 {
                     case (byte) 0xA0:
                         Log.d("dD()", "A0 Command found.");
-                        if (!java.util.Arrays.equals(receiveTmp, byteArray))
+                        if (!java.util.Arrays.equals(A0Tmp, byteArray))
                         {
-                            Log.d("dD()", "Add new receive data to List.");
+                            Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
-                            receiveTmp = byteArray.clone();
+                            A0Tmp = byteArray.clone();
                             LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
 
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
+                        break;
+
+                    case (byte) 0xA1:
+                        Log.d("dD()", "A1 Command found.");
+                        if (!java.util.Arrays.equals(A1Tmp, byteArray))
+                        {
+                            Log.d("dD()", "Add A1 receive data to List.");
+                            A0ReciveList.add(byteArray);
+                            A1Tmp = byteArray.clone();
+                            LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                        }
                         break;
 
                     default:
@@ -538,14 +551,103 @@ public class MainActivity extends AppCompatActivity
                 OpenDialog = false;
                 progressDialog.cancel();
             }
-
-            //String tmp = new String(byteArray);
-            //InsertMessage("Byte: " + tmp);
-            //LogDebugShow("display 2 Data ", byteArray);
-
-            //if ((byteArray[0] == 'M') && (byteArray[3]))
         }
     }
+
+    private void parserData(List<byte[]> dataList)
+    {
+        if (dataList.size()>0) //debug
+        {
+            mDataText.setText("");  // clean Text View
+            for (int i=0; i<dataList.size(); i++)
+            {
+                //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
+                LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
+                commandParser(dataList.get(i));
+            }
+        }
+
+    }
+
+    private void commandParser(byte[] dataInfo)
+    {
+        switch (dataInfo[4])
+        {
+            case (byte) 0xA0:
+                ambient(dataInfo[5], dataInfo[6]);
+                measure(dataInfo[7], dataInfo[8]);
+                measureTime(dataInfo[9], dataInfo[10], dataInfo[11], dataInfo[12]);
+                if ((dataInfo[12] & 0x80) > 0)
+                    measureErroe((byte) (dataInfo[12] & 0x80));
+                break;
+
+            case (byte) 0xA1:
+                workModeShow(dataInfo[5]);
+                batteryState(dataInfo[6]);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void workModeShow(byte mode)
+    {
+        switch (mode)
+        {
+            case (byte) 0x00:
+                InsertMessage("Body mode");
+                break;
+
+            case (byte) 0x01:
+                InsertMessage("Object mode");
+                break;
+
+            case (byte) 0x02:
+                InsertMessage("Memory mode");
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void batteryState(byte state)
+    {
+        float   tmp = (float) (0.02 * (int) state);
+        InsertMessage(String.format("%5.3fv", tmp));
+    }
+
+    private void ambient(byte dataH, byte dataL)
+    {
+
+    }
+
+    private void measure(byte dataH, byte dataL)
+    {
+
+    }
+
+    private void measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
+    {
+        byte tmpMonth=0;
+        byte tmpYear = (byte)(mYear & 0x3F);
+        byte tmpHour = (byte)(mHour & 0x3F);
+        byte tmpDay =  (byte)(mDay & 0x3F);
+
+        tmpMonth = (byte) (mHour & 0xC0);
+        tmpMonth >>= 2;
+        tmpMonth |= (byte) (mDay & 0xC0);
+
+        InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
+                ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
+    }
+
+    private void measureErroe(byte info)
+    {
+        InsertMessage("Error code: " + (int)info);
+    }
+
 
 
     @Override
