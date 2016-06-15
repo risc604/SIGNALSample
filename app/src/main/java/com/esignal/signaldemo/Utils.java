@@ -20,7 +20,7 @@ public class Utils
                 ,(byte)(mCal.get(Calendar.YEAR)-2000)
                 ,(byte)(mCal.get(Calendar.MONTH)+1)
                 ,(byte)(mCal.get(Calendar.DATE))
-                ,(byte)(mCal.get(Calendar.HOUR))
+                ,(byte)(mCal.get(Calendar.HOUR_OF_DAY))
                 ,(byte)(mCal.get(Calendar.MINUTE))
                 ,(byte)(mCal.get(Calendar.SECOND))
                 ,0x00

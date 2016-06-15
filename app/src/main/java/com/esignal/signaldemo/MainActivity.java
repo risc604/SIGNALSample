@@ -525,35 +525,36 @@ public class MainActivity extends AppCompatActivity
         switch (dataInfo[4])
         {
             case (byte) 0xA0:
-                if ((dataInfo[12] & 0x80) > 0)  //check Error
+                if ((dataInfo[12] & 0x0080) > 0)  //check Error
                 {
-                    A0Message = measureError((byte) (dataInfo[12] & 0xC0));
+                    A0Message = measureError((byte) (dataInfo[12] & 0x00C0));
                 }
                 else
                 {
                     A0Message = ambient(dataInfo[5], dataInfo[6]) + ", " +
-                            workModeShow((byte) (dataInfo[7] & 0x80)) + "= " +
-                            measure((byte) (dataInfo[7] & 0x7F), dataInfo[8]) + ", " +
+                            workMode(dataInfo[7]) + "= " +
+                            measure((byte) (dataInfo[7] & 0x007F), dataInfo[8]) + ", " +
                             measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
-                                    (byte) (dataInfo[12] & 0x3F));
+                                    (byte) (dataInfo[12] & 0x003F));
                 }
                 break;
 
             case (byte) 0xA1:
-                A1Message = workModeShow(dataInfo[5]) + ", " + batteryState(dataInfo[6]);
+                A1Message = workMode(dataInfo[5]) + ", " + batteryState(dataInfo[6]);
                 break;
 
             default:
                 break;
         }
-        InsertMessage(A1Message + "\r\n" + A0Message);
+        InsertMessage(A1Message);
+        InsertMessage(A0Message);
     }
 
-    private String workModeShow(byte mode)
+    private String workMode(byte mode)
     {
         String[] tmpStr= new String[]{"Body mode", "Object mode", "Memory mode"};
 
-        if (mode == 0x80)  mode = 1;
+        if ((mode & 0x0080) == 0x80)  mode = 1;
         else if (mode > tmpStr.length)
             return ("mode error, code: " + mode);
 
@@ -562,19 +563,19 @@ public class MainActivity extends AppCompatActivity
 
     private String batteryState(byte state)
     {
-        float   tmp = (float) (0.02 * (int) state);
+        float   tmp = (float) (0.02 * (int) (state & 0x00ff));
         //InsertMessage(String.format("%5.3fv", tmp));
-        return (String.format("%5.3fV", tmp));
+        return (String.format("%4.2fV", tmp));
     }
 
     private String ambient(byte dataH, byte dataL)
     {
         int     tmpValue=0;
-        tmpValue |= (int) dataH;
+        tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
-        tmpValue |= (int) dataL;
+        tmpValue |= (int) (dataL & 0x00ff);
 
-        float ftmp = tmpValue / 100;
+        float ftmp = ((float) tmpValue) / 100;
         //InsertMessage("ambient: " + tmpValue + "℃");
         return(String.format("Amb=%4.2f℃", ftmp));
     }
@@ -582,11 +583,11 @@ public class MainActivity extends AppCompatActivity
     private String measure(byte dataH, byte dataL)
     {
         int     tmpValue=0;
-        tmpValue |= (int) dataH;
+        tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
-        tmpValue |= (int) dataL;
+        tmpValue |= (int) (dataL & 0x00ff);
         //InsertMessage("measure: " + tmpValue + "℃");
-        float   ftmp = tmpValue/100;
+        float   ftmp = ((float) tmpValue)/100;
         return (String.format("%4.2f℃", ftmp));
     }
 
@@ -599,13 +600,12 @@ public class MainActivity extends AppCompatActivity
         }
 
         byte tmpMonth=0;
-        byte tmpYear = (byte)(mYear & 0x3F);
-        byte tmpHour = (byte)(mHour & 0x3F);
-        byte tmpDay =  (byte)(mDay & 0x3F);
+        byte tmpYear = (byte)(mYear & 0x003F);
+        byte tmpHour = (byte)(mHour & 0x003F);
+        byte tmpDay =  (byte)(mDay & 0x003F);
 
-        tmpMonth = (byte) (mHour & 0xC0);
-        tmpMonth >>= 2;
-        tmpMonth |= (byte) (mDay & 0xC0);
+        tmpMonth |= ((mHour & 0x00C0) >>> 2);
+        tmpMonth |= (byte) (mDay & 0x00C0);
         tmpMonth >>= 4;
 
         //InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
