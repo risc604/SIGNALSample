@@ -511,81 +511,93 @@ public class MainActivity extends AppCompatActivity
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
                 LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
-                commandParser(dataList.get(i));
+                messageParser(dataList.get(i));
             }
         }
 
     }
 
-    private void commandParser(byte[] dataInfo)
+    private void messageParser(byte[] dataInfo)
     {
+        String  A0Message = "";
+        String  A1Message = "";
+
         switch (dataInfo[4])
         {
             case (byte) 0xA0:
-                ambient(dataInfo[5], dataInfo[6]);
-                measure(dataInfo[7], dataInfo[8]);
-                measureTime(dataInfo[9], dataInfo[10], dataInfo[11], dataInfo[12]);
-                if ((dataInfo[12] & 0x80) > 0)
-                    measureErroe((byte) (dataInfo[12] & 0x80));
+                if ((dataInfo[12] & 0x80) > 0)  //check Error
+                {
+                    A0Message = measureError((byte) (dataInfo[12] & 0xC0));
+                }
+                else
+                {
+                    A0Message = ambient(dataInfo[5], dataInfo[6]) + ", " +
+                            workModeShow((byte) (dataInfo[7] & 0x80)) + "= " +
+                            measure((byte) (dataInfo[7] & 0x7F), dataInfo[8]) + ", " +
+                            measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
+                                    (byte) (dataInfo[12] & 0x3F));
+                }
                 break;
 
             case (byte) 0xA1:
-                workModeShow(dataInfo[5]);
-                batteryState(dataInfo[6]);
+                A1Message = workModeShow(dataInfo[5]) + ", " + batteryState(dataInfo[6]);
                 break;
 
             default:
                 break;
         }
+        InsertMessage(A1Message + "\r\n" + A0Message);
     }
 
-    private void workModeShow(byte mode)
+    private String workModeShow(byte mode)
     {
-        switch (mode)
-        {
-            case (byte) 0x00:
-                InsertMessage("Body mode");
-                break;
+        String[] tmpStr= new String[]{"Body mode", "Object mode", "Memory mode"};
 
-            case (byte) 0x01:
-                InsertMessage("Object mode");
-                break;
+        if (mode == 0x80)  mode = 1;
+        else if (mode > tmpStr.length)
+            return ("mode error, code: " + mode);
 
-            case (byte) 0x02:
-                InsertMessage("Memory mode");
-                break;
-
-            default:
-                break;
-        }
+        return (tmpStr[mode]);
     }
 
-    private void batteryState(byte state)
+    private String batteryState(byte state)
     {
         float   tmp = (float) (0.02 * (int) state);
-        InsertMessage(String.format("%5.3fv", tmp));
+        //InsertMessage(String.format("%5.3fv", tmp));
+        return (String.format("%5.3fV", tmp));
     }
 
-    private void ambient(byte dataH, byte dataL)
+    private String ambient(byte dataH, byte dataL)
     {
         int     tmpValue=0;
         tmpValue |= (int) dataH;
         tmpValue <<= 8;
         tmpValue |= (int) dataL;
-        InsertMessage("ambient: " + tmpValue + "℃");
+
+        float ftmp = tmpValue / 100;
+        //InsertMessage("ambient: " + tmpValue + "℃");
+        return(String.format("Amb=%4.2f℃", ftmp));
     }
 
-    private void measure(byte dataH, byte dataL)
+    private String measure(byte dataH, byte dataL)
     {
         int     tmpValue=0;
         tmpValue |= (int) dataH;
         tmpValue <<= 8;
         tmpValue |= (int) dataL;
-        InsertMessage("measure: " + tmpValue + "℃");
+        //InsertMessage("measure: " + tmpValue + "℃");
+        float   ftmp = tmpValue/100;
+        return (String.format("%4.2f℃", ftmp));
     }
 
-    private void measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
+    private String measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
     {
+        if ((mDay==0xFF) || (mHour==0xFF) || (mMinute==0xFF))
+        {
+            //InsertMessage("Date/Time some one is 0xFF");
+            return("Date/Time some one is 0xFF");
+        }
+
         byte tmpMonth=0;
         byte tmpYear = (byte)(mYear & 0x3F);
         byte tmpHour = (byte)(mHour & 0x3F);
@@ -596,14 +608,51 @@ public class MainActivity extends AppCompatActivity
         tmpMonth |= (byte) (mDay & 0xC0);
         tmpMonth >>= 4;
 
-        InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
+        //InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
+        //        ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
+        return(String.format("%04d/%02d/%02d, %02d:%02d",
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
     }
 
-    private void measureErroe(byte info)
+    private String measureError(byte info)
     {
-        InsertMessage("Error code: " + (int)info);
+        String[]  ErrorMessage = {"Amb H", "Amb L", "Body H", "Body L"};
+
+        if (info > ErrorMessage.length)
+            //InsertMessage("Unknown, Error!");
+            return ("Unknown, Error!");
+        else
+            //InsertMessage(ErrorMessage[(int) info] + ", Error!");
+            return (ErrorMessage[(int) info] + ", Error!");
     }
+
+    /*
+    private void measureError(byte info)
+    {
+        String  tmpError = "";
+
+        switch (info)    //b5~b0
+        {
+            case (byte)0x00:
+                tmpError = "Amb H";
+                break;
+            case (byte)0x01:
+                tmpError = "Amb L";
+                break;
+            case (byte)0x02:
+                tmpError = "Body H";
+                break;
+            case (byte)0x03:
+                tmpError = "Body L";
+                break;
+
+            default:
+                tmpError = "UnKonow";
+        }
+
+        InsertMessage(tmpError + ", Error!");
+    }
+    */
 
 
 
