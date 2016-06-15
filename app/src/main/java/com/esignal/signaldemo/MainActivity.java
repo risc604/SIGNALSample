@@ -531,11 +531,14 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    A0Message = ambient(dataInfo[5], dataInfo[6]) + ", " +
-                            workMode(dataInfo[7]) + "= " +
-                            measure((byte) (dataInfo[7] & 0x007F), dataInfo[8]) + ", " +
-                            measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
-                                    (byte) (dataInfo[12] & 0x003F));
+                    String  ambient = getTemprature(dataInfo[5], dataInfo[6]);
+                    String  workModeStr = workMode(dataInfo[7]);
+                    String  measure = getTemprature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10],
+                                                    dataInfo[11], (byte) (dataInfo[12] & 0x003F));
+
+                    A0Message = "Amb=" + ambient + ", " + workModeStr + "= " +
+                                measure + ", " + ncfrDate;
                 }
                 break;
 
@@ -554,21 +557,21 @@ public class MainActivity extends AppCompatActivity
     {
         String[] tmpStr= new String[]{"Body mode", "Object mode", "Memory mode"};
 
-        if ((mode & 0x0080) == 0x80)  mode = 1;
+        if ((mode & 0x0080) == 0x80)  mode = 0x01;
         else if (mode > tmpStr.length)
             return ("mode error, code: " + mode);
 
-        return (tmpStr[mode]);
+        return (tmpStr[mode & 0x00ff]);
     }
 
-    private String batteryState(byte state)
+    private String batteryState(byte adValue)
     {
-        float   tmp = (float) (0.02 * (int) (state & 0x00ff));
+        float   tmp = (float) (0.02 * (int) (adValue & 0x00ff));
         //InsertMessage(String.format("%5.3fv", tmp));
         return (String.format("%4.2fV", tmp));
     }
 
-    private String ambient(byte dataH, byte dataL)
+    private String getTemprature(byte dataH, byte dataL)
     {
         int     tmpValue=0;
         tmpValue |= (int) (dataH & 0x00ff);
@@ -577,23 +580,12 @@ public class MainActivity extends AppCompatActivity
 
         float ftmp = ((float) tmpValue) / 100;
         //InsertMessage("ambient: " + tmpValue + "℃");
-        return(String.format("Amb=%4.2f℃", ftmp));
-    }
-
-    private String measure(byte dataH, byte dataL)
-    {
-        int     tmpValue=0;
-        tmpValue |= (int) (dataH & 0x00ff);
-        tmpValue <<= 8;
-        tmpValue |= (int) (dataL & 0x00ff);
-        //InsertMessage("measure: " + tmpValue + "℃");
-        float   ftmp = ((float) tmpValue)/100;
-        return (String.format("%4.2f℃", ftmp));
+        return(String.format("%4.2f℃", ftmp));
     }
 
     private String measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
     {
-        if ((mDay==0xFF) || (mHour==0xFF) || (mMinute==0xFF))
+        if (((mDay & 0x00FF) == 0xFF) || ((mHour & 0x00FF) ==0xFF) || ((mMinute & 0x00FF)==0xFF))
         {
             //InsertMessage("Date/Time some one is 0xFF");
             return("Date/Time some one is 0xFF");
@@ -620,39 +612,11 @@ public class MainActivity extends AppCompatActivity
 
         if (info > ErrorMessage.length)
             //InsertMessage("Unknown, Error!");
-            return ("Unknown, Error!");
+            return ("Unknown, Error! Code: " +  Integer.toHexString(info & 0x003f));
         else
             //InsertMessage(ErrorMessage[(int) info] + ", Error!");
-            return (ErrorMessage[(int) info] + ", Error!");
+            return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
-
-    /*
-    private void measureError(byte info)
-    {
-        String  tmpError = "";
-
-        switch (info)    //b5~b0
-        {
-            case (byte)0x00:
-                tmpError = "Amb H";
-                break;
-            case (byte)0x01:
-                tmpError = "Amb L";
-                break;
-            case (byte)0x02:
-                tmpError = "Body H";
-                break;
-            case (byte)0x03:
-                tmpError = "Body L";
-                break;
-
-            default:
-                tmpError = "UnKonow";
-        }
-
-        InsertMessage(tmpError + ", Error!");
-    }
-    */
 
 
 
