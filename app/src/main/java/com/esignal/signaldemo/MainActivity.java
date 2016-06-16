@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
-    static final float  adResolution = (float) 0.02;
+    static final float  adResolution = (float) 0.02f;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
     private byte[] A0Tmp = new byte[14];
@@ -514,7 +514,6 @@ public class MainActivity extends AppCompatActivity
                 messageParser(dataList.get(i));
             }
         }
-
     }
 
     private void messageParser(byte[] dataInfo)
@@ -531,14 +530,14 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    String  ambient = getTemprature(dataInfo[5], dataInfo[6]);
-                    String  workModeStr = workMode(dataInfo[7]);
-                    String  measure = getTemprature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
-                    String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10],
-                                                    dataInfo[11], (byte) (dataInfo[12] & 0x003F));
+                    String  ambient = getTemperature(dataInfo[5], dataInfo[6]);
+                    String  workModeStr = workMode((byte) ((dataInfo[7] & 0x0080) >>> 7));
+                    String  measure = getTemperature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
+                                                    (byte) (dataInfo[12] & 0x003F));
 
                     A0Message = "Amb=" + ambient + ", " + workModeStr + "= " +
-                                measure + ", " + ncfrDate;
+                                measure + ", no fever, " + ncfrDate;
                 }
                 break;
 
@@ -566,12 +565,12 @@ public class MainActivity extends AppCompatActivity
 
     private String batteryState(byte adValue)
     {
-        float   tmp = (float) (0.02 * (int) (adValue & 0x00ff));
+        float   tmp = (float) (adResolution * (int) (adValue & 0x00ff));
         //InsertMessage(String.format("%5.3fv", tmp));
         return (String.format("%4.2fV", tmp));
     }
 
-    private String getTemprature(byte dataH, byte dataL)
+    private String getTemperature(byte dataH, byte dataL)
     {
         int     tmpValue=0;
         tmpValue |= (int) (dataH & 0x00ff);
