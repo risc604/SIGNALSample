@@ -439,7 +439,7 @@ public class MainActivity extends AppCompatActivity
             sb.append(format("%02X", indx));
         }
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
-        InsertMessage("Cmd:" + sb.toString());
+        InsertMessage("C:" + sb.toString());
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -459,7 +459,7 @@ public class MainActivity extends AppCompatActivity
 
             if (byteArray[0] == 'M')
             {
-                InsertMessage("Rev:" + data);
+                InsertMessage("R:" + data);
                 Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": " + mBluetoothLeService.mBluetoothGattConnected);
 
                 //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
@@ -537,7 +537,7 @@ public class MainActivity extends AppCompatActivity
                                                     (byte) (dataInfo[12] & 0x003F));
 
                     A0Message = "Amb=" + ambient + ", " + workModeStr + "= " +
-                                measure + ", no fever, " + ncfrDate;
+                                measure + ",\r\nno fever, " + ncfrDate;
                 }
                 break;
 
@@ -548,8 +548,8 @@ public class MainActivity extends AppCompatActivity
             default:
                 break;
         }
-        InsertMessage(A1Message);
-        InsertMessage(A0Message);
+        InsertMessage(A1Message + A0Message);
+        //InsertMessage(A0Message);
     }
 
     private String workMode(byte mode)
@@ -728,6 +728,7 @@ public class MainActivity extends AppCompatActivity
 
     private void InsertMessage(String Message)
     {
+        //mDataText.setText(mDataText.getText()+Message);
         mDataText.setText(mDataText.getText()+Message+"\r\n");
         //mDataText.append(Message);
         mScroller.fullScroll(ScrollView.FOCUS_DOWN);
