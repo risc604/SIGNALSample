@@ -483,7 +483,8 @@ public class MainActivity extends AppCompatActivity
             if (byteArray[0] == 'M')
             {
                 InsertMessage("R:" + data);
-                Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": " + mBluetoothLeService.mBluetoothGattConnected);
+                Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": "
+                        + mBluetoothLeService.mBluetoothGattConnected);
 
                 //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
                 switch (byteArray[4])
@@ -497,7 +498,6 @@ public class MainActivity extends AppCompatActivity
                             A0Tmp = byteArray.clone();
                             LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
-
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                         break;
 
@@ -533,7 +533,7 @@ public class MainActivity extends AppCompatActivity
             for (int i=0; i<dataList.size(); i++)
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
-                LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
+                //LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
                 messageParser(dataList.get(i));
             }
         }
@@ -547,9 +547,9 @@ public class MainActivity extends AppCompatActivity
         switch (dataInfo[4])
         {
             case (byte) 0xA0:
-                if ((dataInfo[12] & 0x0080) > 0)  //check Error
+                if ((dataInfo[12] & 0x0080) == 0x0080)  //check Error
                 {
-                    A0Message = measureError((byte) (dataInfo[12] & 0x00C0));
+                    A0Message = measureError((byte) (dataInfo[12] & 0x003F));
                 }
                 else
                 {
@@ -558,9 +558,10 @@ public class MainActivity extends AppCompatActivity
                     String  measure = getTemperature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
                     String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
                                                     (byte) (dataInfo[12] & 0x003F));
+                    String  feverState = ((dataInfo[12] & 0x0040) == 0x0040) ? "fever" : "no fever";
 
                     A0Message = "Amb=" + ambient + ", " + workModeStr + "= " +
-                                measure + ",\r\nno fever, " + ncfrDate;
+                                measure + ",\r\n" + feverState +", " + ncfrDate;
                 }
                 break;
 
@@ -571,8 +572,7 @@ public class MainActivity extends AppCompatActivity
             default:
                 break;
         }
-        InsertMessage(A1Message + A0Message);
-        //InsertMessage(A0Message);
+        InsertMessage(A1Message + A0Message + "\r\n");
     }
 
     private String workMode(byte mode)
@@ -589,7 +589,7 @@ public class MainActivity extends AppCompatActivity
     private String batteryState(byte adValue)
     {
         float   tmp = (float) (adResolution * (int) (adValue & 0x00ff));
-        //InsertMessage(String.format("%5.3fv", tmp));
+
         return (String.format("%4.2fV", tmp));
     }
 
@@ -599,9 +599,8 @@ public class MainActivity extends AppCompatActivity
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
-
         float ftmp = ((float) tmpValue) / 100;
-        //InsertMessage("ambient: " + tmpValue + "℃");
+
         return(String.format("%4.2f℃", ftmp));
     }
 
@@ -609,11 +608,10 @@ public class MainActivity extends AppCompatActivity
     {
         if (((mDay & 0x00FF) == 0xFF) || ((mHour & 0x00FF) ==0xFF) || ((mMinute & 0x00FF)==0xFF))
         {
-            //InsertMessage("Date/Time some one is 0xFF");
             return("Date/Time some one is 0xFF");
         }
 
-        byte tmpMonth=0;
+        byte tmpMonth = 0;
         byte tmpYear = (byte)(mYear & 0x003F);
         byte tmpHour = (byte)(mHour & 0x003F);
         byte tmpDay =  (byte)(mDay & 0x003F);
@@ -622,8 +620,6 @@ public class MainActivity extends AppCompatActivity
         tmpMonth |= (byte) (mDay & 0x00C0);
         tmpMonth >>= 4;
 
-        //InsertMessage(String.format("%04d/%02d/%02d %02d:%02d",
-        //        ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
         return(String.format("%04d/%02d/%02d, %02d:%02d",
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
     }
@@ -633,10 +629,8 @@ public class MainActivity extends AppCompatActivity
         String[]  ErrorMessage = {"Amb H", "Amb L", "Body H", "Body L"};
 
         if (info > ErrorMessage.length)
-            //InsertMessage("Unknown, Error!");
             return ("Unknown, Error! Code: " +  Integer.toHexString(info & 0x003f));
         else
-            //InsertMessage(ErrorMessage[(int) info] + ", Error!");
             return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
 

@@ -614,6 +614,4 @@ public class BluetoothLeService extends Service
             handler.removeCallbacks(TimeOUTCheckTimer);
         }
     };
-
-
 }
