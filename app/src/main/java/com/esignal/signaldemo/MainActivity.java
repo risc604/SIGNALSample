@@ -176,6 +176,10 @@ public class MainActivity extends AppCompatActivity
                 //Notify Enabled & Send Command to BLE Device
                 //CommandTest();
             }
+            else if (BluetoothLeService.COUNTDOWN_BR.equals(action))
+            {
+                mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+            }
             else if (BluetoothLeService.ACTION_Connect_Fail.equals(action))
             {}
         }
@@ -426,6 +430,7 @@ public class MainActivity extends AppCompatActivity
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             versionCode = packageInfo.versionCode;
             versionName = packageInfo.versionName;
+            Log.d("appVersion", "Ver. " + versionName + "." + versionCode);
         }
         catch (PackageManager.NameNotFoundException e)
         {
@@ -503,6 +508,7 @@ public class MainActivity extends AppCompatActivity
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
 
                         CommandTest((byte) 0xA0);
+                        mBluetoothLeService.cdt.start();
                         mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
                         Log.d("0xA1 Ack", "sent A1 Ack to BLE service.");
                         break;
@@ -517,6 +523,7 @@ public class MainActivity extends AppCompatActivity
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
 
                             CommandTest((byte) 0xA1);
+                            mBluetoothLeService.cdt.start();
                             mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
                             Log.d("0xA0 Ack", "sent A0 Ack to BLE service.");
                         }

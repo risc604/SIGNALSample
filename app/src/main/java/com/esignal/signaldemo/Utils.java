@@ -17,6 +17,7 @@ import java.util.List;
 public class Utils
 {
     private static final String TAG = Utils.class.getSimpleName();
+    static final String HEXES = "0123456789ABCDEF";
 
     public Utils()
     {}
@@ -63,6 +64,7 @@ public class Utils
     {
         //Environment.getExternalStorageDirectory().getPath()
         String  fileName = "/sdcard/" + makeFileName() + ".log";
+        byte[]  nextLine = {0x0D, 0x0A};
 
         Log.d(TAG, "log file: " + fileName);
         try
@@ -70,7 +72,8 @@ public class Utils
             FileOutputStream    fOut = new FileOutputStream(new File(fileName), true);
             for (int i=0; i<DataList.size(); i++)
             {
-                fOut.write(DataList.get(i));
+                fOut.write(getHexToString(DataList.get(i)).getBytes());
+                fOut.write(nextLine);
             }
             fOut.close();
             Log.d(TAG, "write log file Ok.");
@@ -85,5 +88,20 @@ public class Utils
             //e.printStackTrace();
             Log.d(TAG, "write File fail !");
         }
+    }
+
+    public static String getHexToString(byte[] raw)
+    {
+        if (raw == null)
+        {
+            return null;
+        }
+        final StringBuilder hex = new StringBuilder(2 * raw.length);
+        for (final byte b : raw)
+        {
+            hex.append(HEXES.charAt((b & 0xF0) >> 4))
+                    .append(HEXES.charAt((b & 0x0F)));
+        }
+        return hex.toString();
     }
 }

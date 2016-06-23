@@ -52,23 +52,24 @@ public class BluetoothLeService extends Service
 {
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeScanner mBluetoothScanner;
+    private BluetoothManager    mBluetoothManager;
+    private BluetoothAdapter    mBluetoothAdapter;
+    private BluetoothLeScanner  mBluetoothScanner;
+    private ScanSettings        scanSettings;
+    List<ScanFilter>            filters;
 
-    private ScanSettings scanSettings;
-    List<ScanFilter> filters;
+    public BluetoothGatt    mBluetoothGatt;
+    public String           mBluetoothGattAddress;
+    public boolean          mBluetoothGattServiceDiscover;
+    public boolean          mBluetoothGattConnected;
 
-    public BluetoothGatt mBluetoothGatt;
-    public String mBluetoothGattAddress;
-    public boolean mBluetoothGattServiceDiscover;
-    public boolean mBluetoothGattConnected;
-
-    private int mConnectionState = STATE_DISCONNECTED;
+    CountDownTimer  cdt = null;
+    private int     mConnectionState = STATE_DISCONNECTED;
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private static final int STATE_ConnectSus = 3;
+    //private static final int STATE_ConnectSus = 3;
+    //private static final int SERVICE_TIME_OUT = 5;     // every service connection auto time out 5s.
 
     public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
@@ -78,17 +79,19 @@ public class BluetoothLeService extends Service
     public final static String ACTION_GATT_DEVICE_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_DEVICE_DISCOVERED";
     public final static String ACTION_mBluetoothDeviceName = "com.example.bluetooth.le.mBluetoothDevice";
     public final static String ACTION_mBluetoothDeviceAddress = "com.example.bluetooth.le.mBluetoothDeviceAddress";
-    public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
+    //public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
     public final static String ACTION_Enable = "com.example.bluetooth.le.ACTION_Enable";
     public final static String ACTION_Connect_Fail = "com.example.bluetooth.le.ACTION_Connect_Fail";
+    public static final String COUNTDOWN_BR = "com.example.bluetooth.le.countdown_br";
 
     //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
     public final static UUID UUID_NOTIFY_CHARACTERISTIC =  UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
     public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
 
     private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
-    static final String HEXES = "0123456789ABCDEF";
+    //static final String HEXES = "0123456789ABCDEF";
     private Handler handler = new Handler();
+    Intent bi = new Intent(COUNTDOWN_BR);
 
 
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -278,41 +281,19 @@ public class BluetoothLeService extends Service
     {
         final Intent intent = new Intent(action);
 
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
+        // For all other profiles, writes the data formatted in HEX.
+        final byte[] data = characteristic.getValue();
 
-        /*
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else
-        */
-        //{
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
+        if (data != null && data.length > 0)
+        {
+            final StringBuilder stringBuilder = new StringBuilder(data.length);
+            for (byte byteChar : data)
+                 stringBuilder.append(String.format("%02X", byteChar));
+            intent.putExtra(EXTRA_DATA, stringBuilder.toString());
 
-            if (data != null && data.length > 0)
-            {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for (byte byteChar : data)
-                    stringBuilder.append(String.format("%02X", byteChar));
-                intent.putExtra(EXTRA_DATA, stringBuilder.toString());
-
-                //intent.putExtra(EXTRA_DATA, (Serializable) data);
-                //sendBroadcast(intent);
-            }
-        //}
+            //intent.putExtra(EXTRA_DATA, (Serializable) data);
+            //sendBroadcast(intent);
+        }
         sendBroadcast(intent);
     }
 
@@ -320,6 +301,7 @@ public class BluetoothLeService extends Service
     {
         BluetoothLeService getService()
         {
+            cdt.start();
             return BluetoothLeService.this;
         }
     }
@@ -329,7 +311,7 @@ public class BluetoothLeService extends Service
     {
         super.onCreate();
         Log.d(TAG, "Service countdown timer is setting.");
-        cdt = new CountDownTimer(SERVICE_TIME_OUT * 1000, 1000)
+        cdt = new CountDownTimer(BLE_CONNECT_TIMEOUT, 1000) //6s
         {
             @Override
             public void onTick(long millisUntilFinished)
@@ -337,21 +319,34 @@ public class BluetoothLeService extends Service
                 long tmp = millisUntilFinished/1000;
                 if (tmp > 0)
                 {
-                    Log.i(TAG, "Countdown second remaining: " + millisUntilFinished);
-                    bi.putExtra("countdown", tmp);
+                    Log.i(TAG, "Countdown second remaining: " + tmp);
+                    //Intent  timeOutIntent = new Intent(ACTION_GATT_DISCONNECTED);
+                    //sendBroadcast(timeOutIntent);
+                    //bi.putExtra("countdown", tmp);
                     //bi.putExtra("TimeOut", false);
                     //sendBroadcast(bi);
+
+                }
+                else if (tmp <= 2)
+                {
+                    //Intent  timeOutIntent = new Intent(ACTION_GATT_DISCONNECTED);
+                    sendBroadcast(bi);
+                    //onFinish();
                 }
             }
 
             @Override
             public void onFinish()
             {
-                bi.putExtra("countdown", 0L);
+                //bi.putExtra("countdown", 0L);
                 //bi.putExtra("TimeOut", true);
-                //sendBroadcast(bi);
                 Log.i(TAG, "Timer finished");
+                sendBroadcast(bi);
+                //close();
+                //disconnect();
             }
+
+
         };
     }
 
@@ -607,6 +602,7 @@ public class BluetoothLeService extends Service
     }
     */
 
+    /*
     public static String getHexToString(byte[] raw)
     {
         if (raw == null)
@@ -621,7 +617,7 @@ public class BluetoothLeService extends Service
         }
         return hex.toString();
     }
-    //*/
+    */
 
     private Runnable TimeOUTCheckTimer = new Runnable()
     {
