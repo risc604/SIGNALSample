@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity
             //BLE Status Changed
             final String action = intent.getAction();
 
+            Log.d("mGattUpdateReceiver()", "action:" + action);     //debug
+
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action))                //裝置連線成功
             {
                 invalidateOptionsMenu();
@@ -130,9 +132,11 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action))        //裝置斷線
             {
+                Utils.writeLogFile(A0ReciveList);
                 invalidateOptionsMenu();
                 mConnect.setText("Disconnected");
                 InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
+                parserData(A0ReciveList);
 
                 if(OpenDialog)
                 {
@@ -140,7 +144,6 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.dismiss();
                 }
 
-                parserData(A0ReciveList);
                 //if (A0ReciveList.size()>0) //debug
                 //{
                 //    for (int i=0; i<A0ReciveList.size(); i++)
@@ -486,7 +489,6 @@ public class MainActivity extends AppCompatActivity
                 Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": "
                         + mBluetoothLeService.mBluetoothGattConnected);
 
-                //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
@@ -496,9 +498,13 @@ public class MainActivity extends AppCompatActivity
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A0Tmp = byteArray.clone();
-                            LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                            //LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
+
+                        CommandTest((byte) 0xA0);
+                        mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                        Log.d("0xA1 Ack", "sent A1 Ack to BLE service.");
                         break;
 
                     case (byte) 0xA1:
@@ -508,7 +514,11 @@ public class MainActivity extends AppCompatActivity
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A1Tmp = byteArray.clone();
-                            LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                            //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+
+                            CommandTest((byte) 0xA1);
+                            mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+                            Log.d("0xA0 Ack", "sent A0 Ack to BLE service.");
                         }
                         break;
 
