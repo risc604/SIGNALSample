@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity
 
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver()
     {
+
         @Override
         public void onReceive(Context context, Intent intent)
         {
@@ -152,7 +153,6 @@ public class MainActivity extends AppCompatActivity
                 //        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
                 //    }
                 //}
-
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {

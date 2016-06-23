@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -200,14 +201,12 @@ public class BluetoothLeService extends Service
 
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
                 NotifyEnable(gatt);
-
             }
             else
             {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
         }
-
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt,
@@ -323,6 +322,37 @@ public class BluetoothLeService extends Service
         {
             return BluetoothLeService.this;
         }
+    }
+
+    @Override
+    public void onCreate()
+    {
+        super.onCreate();
+        Log.d(TAG, "Service countdown timer is setting.");
+        cdt = new CountDownTimer(SERVICE_TIME_OUT * 1000, 1000)
+        {
+            @Override
+            public void onTick(long millisUntilFinished)
+            {
+                long tmp = millisUntilFinished/1000;
+                if (tmp > 0)
+                {
+                    Log.i(TAG, "Countdown second remaining: " + millisUntilFinished);
+                    bi.putExtra("countdown", tmp);
+                    //bi.putExtra("TimeOut", false);
+                    //sendBroadcast(bi);
+                }
+            }
+
+            @Override
+            public void onFinish()
+            {
+                bi.putExtra("countdown", 0L);
+                //bi.putExtra("TimeOut", true);
+                //sendBroadcast(bi);
+                Log.i(TAG, "Timer finished");
+            }
+        };
     }
 
     @Override
@@ -477,7 +507,7 @@ public class BluetoothLeService extends Service
         mBluetoothGattAddress=null;
         mBluetoothGattConnected=false;
 
-        if(handler!=null)handler.removeCallbacks(TimeOUTCheckTimer);
+        if(handler!=null)   handler.removeCallbacks(TimeOUTCheckTimer);
     }
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic,BluetoothGatt Gatt)

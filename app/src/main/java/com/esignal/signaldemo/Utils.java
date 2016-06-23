@@ -21,16 +21,6 @@ public class Utils
     public Utils()
     {}
 
-    /*
-    public static byte[] getSystemDateTime()
-    {
-        byte[]  tmpDateTime;
-        tmpDateTime = new byte[];
-
-        return tmpDateTime;
-    }
-    */
-
     public static byte[] mlcTestCommand(byte fnCMDByte)
     {
         Calendar mCal = Calendar.getInstance();
