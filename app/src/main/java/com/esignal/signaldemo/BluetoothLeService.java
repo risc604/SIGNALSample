@@ -78,17 +78,19 @@ public class BluetoothLeService extends Service
     public final static String ACTION_GATT_DEVICE_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_DEVICE_DISCOVERED";
     public final static String ACTION_mBluetoothDeviceName = "com.example.bluetooth.le.mBluetoothDevice";
     public final static String ACTION_mBluetoothDeviceAddress = "com.example.bluetooth.le.mBluetoothDeviceAddress";
-    public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
+    //public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
     public final static String ACTION_Enable = "com.example.bluetooth.le.ACTION_Enable";
     public final static String ACTION_Connect_Fail = "com.example.bluetooth.le.ACTION_Connect_Fail";
+    public final static String COUNTDOWN_BR = "com.example.bluetooth.le.countdown_br";
 
     //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
     public final static UUID UUID_NOTIFY_CHARACTERISTIC =  UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
     public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
 
     private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
-    static final String HEXES = "0123456789ABCDEF";
     private Handler handler = new Handler();
+    Intent  bi = new Intent(COUNTDOWN_BR);
+    CountDownTimer  cdt = null;
 
 
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -329,13 +331,13 @@ public class BluetoothLeService extends Service
     {
         super.onCreate();
         Log.d(TAG, "Service countdown timer is setting.");
-        cdt = new CountDownTimer(SERVICE_TIME_OUT * 1000, 1000)
+        cdt = new CountDownTimer(BLE_CONNECT_TIMEOUT, 1000)
         {
             @Override
             public void onTick(long millisUntilFinished)
             {
                 long tmp = millisUntilFinished/1000;
-                if (tmp > 0)
+                if (tmp >= 1)
                 {
                     Log.i(TAG, "Countdown second remaining: " + millisUntilFinished);
                     bi.putExtra("countdown", tmp);
@@ -606,22 +608,6 @@ public class BluetoothLeService extends Service
         return data;
     }
     */
-
-    public static String getHexToString(byte[] raw)
-    {
-        if (raw == null)
-        {
-            return null;
-        }
-        final StringBuilder hex = new StringBuilder(2 * raw.length);
-        for (final byte b : raw)
-        {
-            hex.append(HEXES.charAt((b & 0xF0) >> 4))
-                    .append(HEXES.charAt((b & 0x0F)));
-        }
-        return hex.toString();
-    }
-    //*/
 
     private Runnable TimeOUTCheckTimer = new Runnable()
     {

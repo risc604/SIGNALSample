@@ -370,6 +370,7 @@ public class MainActivity extends AppCompatActivity
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_Enable);
         intentFilter.addAction(BluetoothLeService.ACTION_Connect_Fail);
+        intentFilter.addAction(BluetoothLeService.COUNTDOWN_BR);
 
         return intentFilter;
     }
