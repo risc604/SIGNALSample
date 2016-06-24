@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity
     ProgressDialog  progressDialog;
     Button      Btn_A0ack;
     Button      Btn_A1ack;
+    Button      Btn_Result;
     TextView    mDataText;
     TextView    mConnect;
     ScrollView  mScroller;
@@ -140,7 +141,7 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.dismiss();
                 }
 
-                parserData(A0ReciveList);
+                //parserData(A0ReciveList);
                 //if (A0ReciveList.size()>0) //debug
                 //{
                 //    for (int i=0; i<A0ReciveList.size(); i++)
@@ -187,6 +188,7 @@ public class MainActivity extends AppCompatActivity
 
         Btn_A0ack = (Button) findViewById(R.id.btn_A0ack);
         Btn_A1ack = (Button) findViewById(R.id.btn_A1ack);
+        Btn_Result = (Button) findViewById(R.id.btnResult);
         mDataText = (TextView) findViewById(R.id.DataText);
         mScroller = (ScrollView) findViewById(R.id.Scroller);
         mConnect = (TextView) findViewById(R.id.textView);
@@ -411,6 +413,12 @@ public class MainActivity extends AppCompatActivity
         CommandTest((byte) 0xA0);
     }
 
+    public void btnResultClock(View v)
+    {
+        parserData(A0ReciveList);
+        mBluetoothLeService.disconnect();
+    }
+
     private void displayGattServices(List<BluetoothGattService> gattServices)
     {
         if (gattServices == null) return;
@@ -496,7 +504,7 @@ public class MainActivity extends AppCompatActivity
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A0Tmp = byteArray.clone();
-                            LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                            //LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                         break;
@@ -508,7 +516,7 @@ public class MainActivity extends AppCompatActivity
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A1Tmp = byteArray.clone();
-                            LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                            //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         break;
 
@@ -534,12 +542,12 @@ public class MainActivity extends AppCompatActivity
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
                 //LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
-                messageParser(dataList.get(i));
+                parserRawData(dataList.get(i));
             }
         }
     }
 
-    private void messageParser(byte[] dataInfo)
+    private void parserRawData(byte[] dataInfo)
     {
         String  A0Message = "";
         String  A1Message = "";
@@ -549,7 +557,7 @@ public class MainActivity extends AppCompatActivity
             case (byte) 0xA0:
                 if ((dataInfo[12] & 0x0080) == 0x0080)  //check Error
                 {
-                    A0Message = measureError((byte) (dataInfo[12] & 0x003F));
+                    A0Message = errorMessage((byte) (dataInfo[12] & 0x003F));
                 }
                 else
                 {
@@ -624,7 +632,7 @@ public class MainActivity extends AppCompatActivity
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
     }
 
-    private String measureError(byte info)
+    private String errorMessage(byte info)
     {
         String[]  ErrorMessage = {"Amb H", "Amb L", "Body H", "Body L"};
 
