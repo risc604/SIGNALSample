@@ -73,8 +73,10 @@ public class Utils
             FileOutputStream    fOut = new FileOutputStream(new File(fileName), true);
             for (int i=0; i<DataList.size(); i++)
             {
-                fOut.write((getHexToString(DataList.get(i)) + nextLine).getBytes());
+                fOut.write(getHexToString(DataList.get(i)).getBytes());
+                fOut.write(nextLine);
             }
+
             fOut.close();
             Log.d(TAG, "write log file Ok.");
         }

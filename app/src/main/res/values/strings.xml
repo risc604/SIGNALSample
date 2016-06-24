@@ -3,4 +3,5 @@
     <string name="action_settings">Settings</string>
     <string name="barTitle">NC150 BLE Demo</string>
     <string name="a0_ack">A0 ACK</string>
+    <string name="appVersionName">1.0</string>
 </resources>

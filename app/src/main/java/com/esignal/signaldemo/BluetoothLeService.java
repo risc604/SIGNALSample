@@ -337,13 +337,17 @@ public class BluetoothLeService extends Service
             public void onTick(long millisUntilFinished)
             {
                 long tmp = millisUntilFinished/1000;
-                if (tmp >= 1)
-                {
+                //if (tmp > 2)
+                //{
                     Log.i(TAG, "Countdown second remaining: " + millisUntilFinished);
                     bi.putExtra("countdown", tmp);
                     //bi.putExtra("TimeOut", false);
-                    //sendBroadcast(bi);
-                }
+                    sendBroadcast(bi);
+                //}
+                //else if (tmp<=2)
+                //{
+                //    onFinish();
+                //}
             }
 
             @Override
@@ -351,7 +355,7 @@ public class BluetoothLeService extends Service
             {
                 bi.putExtra("countdown", 0L);
                 //bi.putExtra("TimeOut", true);
-                //sendBroadcast(bi);
+                sendBroadcast(bi);
                 Log.i(TAG, "Timer finished");
             }
         };
@@ -440,6 +444,7 @@ public class BluetoothLeService extends Service
         //Connect Time Out Check  6 second
         handler.postDelayed(TimeOUTCheckTimer, BLE_CONNECT_TIMEOUT);
 
+        //cdt.start();
         return true;
     }
 
@@ -499,6 +504,7 @@ public class BluetoothLeService extends Service
         mBluetoothAdapter.cancelDiscovery();
         mConnectionState=STATE_DISCONNECTED;
         if(mBluetoothGatt != null) mBluetoothGatt.disconnect();
+        cdt.cancel();
     }
 
     public void close()
@@ -508,9 +514,15 @@ public class BluetoothLeService extends Service
         mBluetoothGatt = null;
         mBluetoothGattAddress=null;
         mBluetoothGattConnected=false;
+        cdt.cancel();
 
         if(handler!=null)   handler.removeCallbacks(TimeOUTCheckTimer);
     }
+
+    //public void timerStart()
+    //{
+    //    cdt.start();
+    //}
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic,BluetoothGatt Gatt)
     {

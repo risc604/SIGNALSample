@@ -70,8 +70,6 @@ public class MainActivity extends AppCompatActivity
     boolean SearchBLE = false;
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
-    int     versionCode;
-    String  versionName;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
@@ -133,11 +131,16 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action))        //裝置斷線
             {
-                Utils.writeLogFile(A0ReciveList);
+                if (A0ReciveList!=null)
+                {
+                    Utils.writeLogFile(A0ReciveList);
+                    parserData(A0ReciveList);
+                    A0ReciveList = null;
+                }
                 invalidateOptionsMenu();
                 mConnect.setText("Disconnected");
                 InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
-                parserData(A0ReciveList);
+
 
                 if(OpenDialog)
                 {
@@ -145,14 +148,7 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.dismiss();
                 }
 
-                //if (A0ReciveList.size()>0) //debug
-                //{
-                //    for (int i=0; i<A0ReciveList.size(); i++)
-                //    {
-                //        //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
-                //        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
-                //    }
-                //}
+                mBluetoothLeService.disconnect();
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {
@@ -169,6 +165,20 @@ public class MainActivity extends AppCompatActivity
             {
                 DiscoverGattDevice( intent.getStringExtra(BluetoothLeService.ACTION_mBluetoothDeviceName),
                                     intent.getStringExtra(BluetoothLeService.ACTION_mBluetoothDeviceAddress));
+            }
+            else if (BluetoothLeService.COUNTDOWN_BR.equals(action))
+            {
+                //boolean serviceState = checkTimeOut(intent);
+                if (checkTimeOut(intent))
+                {
+                    //Utils.writeLogFile(A0ReciveList);
+                    //invalidateOptionsMenu();
+                    //mConnect.setText("Disconnected");
+                    //InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
+                    //parserData(A0ReciveList);
+                    mBluetoothLeService.broadcastUpdate(mBluetoothLeService.ACTION_GATT_DISCONNECTED);
+                }
+
             }
             else if (BluetoothLeService.ACTION_Enable.equals(action))
             {
@@ -405,6 +415,23 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public boolean checkTimeOut(Intent intent)
+    {
+        long    lastSecand = intent.getLongExtra("countdown", 0);
+
+        if (lastSecand < 2L)
+        {
+            Log.d("TimeOut()", "service Time Out: " + lastSecand);
+            return true;
+        }
+        else
+        {
+            //InsertMessage("  " + lastSecand);
+            Log.d("TimeOut()", "CountDown: " + lastSecand + " s");
+            return false;
+        }
+    }
+
     public void cmdA1ack(View v)    // for Button A1ack onClick()
     {
         CommandTest((byte) 0xA1);
@@ -422,19 +449,24 @@ public class MainActivity extends AppCompatActivity
 
     private void appVersion()
     {
+        int     versionCode=0;
+        String  versionName="";
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         try
         {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             versionCode = packageInfo.versionCode;
             versionName = packageInfo.versionName;
+            Log.d("appVersion", "Ver." + versionName  + "." + versionCode);
         }
         catch (PackageManager.NameNotFoundException e)
         {
             e.printStackTrace();
         }
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
+        //toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName);
     }
 
     private void CommandTest(byte command)
@@ -503,6 +535,7 @@ public class MainActivity extends AppCompatActivity
                         }
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
 
+                        mBluetoothLeService.cdt.start();
                         CommandTest((byte) 0xA0);
                         mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
                         Log.d("0xA1 Ack", "sent A1 Ack to BLE service.");
@@ -517,6 +550,7 @@ public class MainActivity extends AppCompatActivity
                             A1Tmp = byteArray.clone();
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
 
+                            mBluetoothLeService.cdt.start();
                             CommandTest((byte) 0xA1);
                             mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
                             Log.d("0xA0 Ack", "sent A0 Ack to BLE service.");
