@@ -48,7 +48,6 @@ public class Utils
         return cmdByte;
     }
 
-
     public static String makeFileName()
     {
         Calendar    mCal = Calendar.getInstance();
@@ -98,6 +97,7 @@ public class Utils
         {
             return null;
         }
+
         final StringBuilder hex = new StringBuilder(2 * raw.length);
         for (final byte b : raw)
         {

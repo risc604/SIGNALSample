@@ -1,6 +1,7 @@
 package com.esignal.signaldemo;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -16,6 +17,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -50,8 +52,8 @@ import static java.lang.String.format;
 
 public class MainActivity extends AppCompatActivity
 {
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeService mBluetoothLeService;
+    private BluetoothAdapter    mBluetoothAdapter;
+    private BluetoothLeService  mBluetoothLeService;
     private LeDeviceListAdapter mLeDeviceListAdapter;
 
     Context         mContext;
@@ -76,8 +78,8 @@ public class MainActivity extends AppCompatActivity
     static final float  adResolution = (float) 0.02f;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
-    private byte[] A0Tmp = new byte[14];
-    private byte[] A1Tmp = new byte[8];
+    private byte[]  A0Tmp = new byte[14];
+    private byte[]  A1Tmp = new byte[8];
 
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
@@ -108,7 +110,6 @@ public class MainActivity extends AppCompatActivity
 
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver()
     {
-
         @Override
         public void onReceive(Context context, Intent intent)
         {
@@ -116,7 +117,6 @@ public class MainActivity extends AppCompatActivity
             final String action = intent.getAction();
 
             Log.d("mGattUpdateReceiver()", "action:" + action);     //debug
-
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action))                //裝置連線成功
             {
                 invalidateOptionsMenu();
@@ -140,7 +140,6 @@ public class MainActivity extends AppCompatActivity
                 invalidateOptionsMenu();
                 mConnect.setText("Disconnected");
                 InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
-
 
                 if(OpenDialog)
                 {
@@ -191,6 +190,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -303,9 +303,7 @@ public class MainActivity extends AppCompatActivity
                     {
                         @Override
                         public void onDismiss(DialogInterface dialog)
-                        {
-                        }
-
+                        {}
                     });
                     builder.show();
                 }
@@ -338,11 +336,11 @@ public class MainActivity extends AppCompatActivity
         if(handler!=null)   handler.removeCallbacks(updateTimer);
     }
 
+    @TargetApi(Build.VERSION_CODES.ECLAIR)
     @Override
     protected void onResume()
     {
         super.onResume();
-
         A0ReciveList.clear();
 
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
@@ -447,26 +445,23 @@ public class MainActivity extends AppCompatActivity
         if (gattServices == null) return;
     }
 
+    @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
     private void appVersion()
     {
-        int     versionCode=0;
-        String  versionName="";
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
         try
         {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionCode = packageInfo.versionCode;
-            versionName = packageInfo.versionName;
+            int     versionCode = packageInfo.versionCode;
+            String  versionName = packageInfo.versionName;
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + versionCode);
             Log.d("appVersion", "Ver." + versionName  + "." + versionCode);
         }
         catch (PackageManager.NameNotFoundException e)
         {
-            e.printStackTrace();
+            Log.d("error ", "appVersion() " + e.toString());
+            //e.printStackTrace();
         }
-
-        toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
-        //toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName);
     }
 
     private void CommandTest(byte command)
@@ -679,14 +674,13 @@ public class MainActivity extends AppCompatActivity
             return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
 
-
-
     @Override
     public void onStop()
     {
         super.onStop();
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void showPopupWindowEvent()
     {
         dismissPopupWindow();
@@ -747,12 +741,11 @@ public class MainActivity extends AppCompatActivity
 
         if(getLength!=0)
         {
-            s="0"+s;
+            s = "0" + s;
         }
 
-        int len = s.length();
-
-        byte[] data = new byte[len / 2];
+        int     len = s.length();
+        byte[]  data = new byte[len / 2];
         for (int i = 0; i < len; i += 2)
         {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) +
@@ -761,6 +754,7 @@ public class MainActivity extends AppCompatActivity
         return data;
     }
 
+    @TargetApi(Build.VERSION_CODES.CUPCAKE)
     private void OpenDialog(String Title, String Meaasge)
     {
         if (!OpenDialog)
@@ -807,9 +801,9 @@ public class MainActivity extends AppCompatActivity
     // Adapter for holding devices found through scanning.
     private class LeDeviceListAdapter extends BaseAdapter
     {
-        private ArrayList<String> mLeDevices;
-        private ArrayList<String> mMacAddress;
-        private LayoutInflater mInflator;
+        private ArrayList<String>   mLeDevices;
+        private ArrayList<String>   mMacAddress;
+        private LayoutInflater      mInflator;
 
         public LeDeviceListAdapter()
         {
