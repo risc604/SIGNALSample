@@ -502,7 +502,7 @@ public class BluetoothLeService extends Service
 
         ScanDevice(false);
         mBluetoothAdapter.cancelDiscovery();
-        mConnectionState=STATE_DISCONNECTED;
+        mConnectionState = STATE_DISCONNECTED;
         if(mBluetoothGatt != null) mBluetoothGatt.disconnect();
         cdt.cancel();
     }

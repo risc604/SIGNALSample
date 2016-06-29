@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity
             {
                 invalidateOptionsMenu();
                 mConnect.setText("Connected");
-                InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Connected");
+                InsertMessage(mBluetoothLeService.mBluetoothGattAddress + " Connected");
 
                 if(OpenDialog)
                 {
@@ -136,18 +136,17 @@ public class MainActivity extends AppCompatActivity
                     Utils.writeLogFile(A0ReciveList);
                     parserData(A0ReciveList);
                     A0ReciveList = null;
+                    //mBluetoothLeService.disconnect();
                 }
                 invalidateOptionsMenu();
                 mConnect.setText("Disconnected");
-                InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
+                InsertMessage(mBluetoothLeService.mBluetoothGattAddress + " Disonnected");
 
                 if(OpenDialog)
                 {
                     OpenDialog=false;
                     progressDialog.dismiss();
                 }
-
-                mBluetoothLeService.disconnect();
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {
@@ -170,6 +169,7 @@ public class MainActivity extends AppCompatActivity
                 if (checkTimeOut(intent))
                 {
                     mBluetoothLeService.broadcastUpdate(mBluetoothLeService.ACTION_GATT_DISCONNECTED);
+                    mBluetoothLeService.disconnect();
                 }
             }
             else if (BluetoothLeService.ACTION_Enable.equals(action))
