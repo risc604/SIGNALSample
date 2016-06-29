@@ -167,17 +167,10 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.COUNTDOWN_BR.equals(action))
             {
-                //boolean serviceState = checkTimeOut(intent);
                 if (checkTimeOut(intent))
                 {
-                    //Utils.writeLogFile(A0ReciveList);
-                    //invalidateOptionsMenu();
-                    //mConnect.setText("Disconnected");
-                    //InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
-                    //parserData(A0ReciveList);
                     mBluetoothLeService.broadcastUpdate(mBluetoothLeService.ACTION_GATT_DISCONNECTED);
                 }
-
             }
             else if (BluetoothLeService.ACTION_Enable.equals(action))
             {
