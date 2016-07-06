@@ -67,7 +67,7 @@ public class BluetoothLeService extends Service
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private static final int STATE_ConnectSus = 3;
+    //private static final int STATE_ConnectSus = 3;
 
     public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
@@ -77,7 +77,7 @@ public class BluetoothLeService extends Service
     public final static String ACTION_GATT_DEVICE_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_DEVICE_DISCOVERED";
     public final static String ACTION_mBluetoothDeviceName = "com.example.bluetooth.le.mBluetoothDevice";
     public final static String ACTION_mBluetoothDeviceAddress = "com.example.bluetooth.le.mBluetoothDeviceAddress";
-    public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
+    //public final static String ACTION_mBluetoothDeviceAdv = "com.example.bluetooth.le.mBluetoothDeviceAdv";
     public final static String ACTION_Enable = "com.example.bluetooth.le.ACTION_Enable";
     public final static String ACTION_Connect_Fail = "com.example.bluetooth.le.ACTION_Connect_Fail";
 

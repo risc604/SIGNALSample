@@ -1,6 +1,7 @@
 package com.esignal.signaldemo;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -16,6 +17,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -71,8 +73,6 @@ public class MainActivity extends AppCompatActivity
     boolean SearchBLE = false;
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
-    int     versionCode;
-    String  versionName;
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
@@ -179,6 +179,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -327,6 +328,7 @@ public class MainActivity extends AppCompatActivity
         if(handler!=null)   handler.removeCallbacks(updateTimer);
     }
 
+    //@TargetApi(Build.VERSION_CODES.ECLAIR)
     @Override
     protected void onResume()
     {
@@ -424,21 +426,22 @@ public class MainActivity extends AppCompatActivity
         if (gattServices == null) return;
     }
 
+    @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
     private void appVersion()
     {
         try
         {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionCode = packageInfo.versionCode;
-            versionName = packageInfo.versionName;
+            int     versionCode = packageInfo.versionCode;
+            String  versionName = packageInfo.versionName;
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
+            Log.d("AppVersion", "Ver." + versionName + "." + versionCode);
         }
         catch (PackageManager.NameNotFoundException e)
         {
             e.printStackTrace();
         }
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
     }
 
     private void CommandTest(byte command)
@@ -470,7 +473,7 @@ public class MainActivity extends AppCompatActivity
             sb.append(format("%02X", indx));
         }
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
-        InsertMessage("C:" + sb.toString());
+        InsertMessage("T:" + sb.toString() + "\r\n");
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -537,7 +540,8 @@ public class MainActivity extends AppCompatActivity
     {
         if (dataList.size()>0) //debug
         {
-            mDataText.setText("");  // clean Text View
+            //mDataText.setText("");  // clean Text View
+            InsertMessage("");  //for \r\n
             for (int i=0; i<dataList.size(); i++)
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
@@ -642,14 +646,13 @@ public class MainActivity extends AppCompatActivity
             return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
 
-
-
     @Override
     public void onStop()
     {
         super.onStop();
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void showPopupWindowEvent()
     {
         dismissPopupWindow();
@@ -724,6 +727,7 @@ public class MainActivity extends AppCompatActivity
         return data;
     }
 
+    //@TargetApi(Build.VERSION_CODES.CUPCAKE)
     private void OpenDialog(String Title, String Meaasge)
     {
         if (!OpenDialog)
