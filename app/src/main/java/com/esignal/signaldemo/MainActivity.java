@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
+                mBluetoothLeService.cdt.cancel();
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
 
                 //displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
@@ -158,7 +159,7 @@ public class MainActivity extends AppCompatActivity
                 if (checkTimeOut(intent))
                 {
                     mBluetoothLeService.broadcastUpdate(mBluetoothLeService.ACTION_GATT_DISCONNECTED);
-                    mBluetoothLeService.disconnect();
+                    //mBluetoothLeService.disconnect();
                 }
             }
             else if (BluetoothLeService.ACTION_Enable.equals(action))
@@ -295,12 +296,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onStart()
-    {
-        super.onStart();
-    }
-
-    @Override
     protected void onPause()
     {
         super.onPause();
@@ -398,7 +393,7 @@ public class MainActivity extends AppCompatActivity
     {
         long    lastSecand = intent.getLongExtra("countdown", 0);
 
-        if (lastSecand < 2L)
+        if (lastSecand < 1L)
         {
             Log.d("TimeOut()", "service Time Out: " + lastSecand);
             return true;

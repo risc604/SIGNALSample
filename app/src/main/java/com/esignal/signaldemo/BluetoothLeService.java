@@ -27,8 +27,10 @@ import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.ParcelUuid;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,7 +70,7 @@ public class BluetoothLeService extends Service
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private static final int STATE_ConnectSus = 3;
+    //private static final int STATE_ConnectSus = 3;
 
     public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
@@ -309,7 +311,7 @@ public class BluetoothLeService extends Service
     {
         super.onCreate();
         Log.d(TAG, "Service countdown timer is setting.");
-        cdt = new CountDownTimer(BLE_CONNECT_TIMEOUT, 1000)
+        cdt = new CountDownTimer(BLE_CONNECT_TIMEOUT-3000, 1000)
         {
             @Override
             public void onTick(long millisUntilFinished)
@@ -429,9 +431,18 @@ public class BluetoothLeService extends Service
                     scanSettingsBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
                     scanSettings = scanSettingsBuilder.build();
 
-                 /*   ScanFilter filter = new ScanFilter.Builder().setDeviceName(DeviceNameFilter).build();
+                    //ScanFilter filter = new ScanFilter.Builder().setDeviceName(DeviceNameFilter).build();
+                    ScanFilter filterSevice = new ScanFilter.Builder().setServiceUuid(
+                            ParcelUuid.fromString(SampleGattAttributes.MLC_CHARACTERISTIC)).build();
+                    ScanFilter filterNotify = new ScanFilter.Builder().setServiceUuid(
+                            ParcelUuid.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC)).build();
+                    ScanFilter filterWTIYE = new ScanFilter.Builder().setServiceUuid(
+                            ParcelUuid.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC)).build();
+
                     filters = new ArrayList<ScanFilter>();
-                    filters.add(filter);*/
+                    filters.add(filterSevice);
+                    filters.add(filterNotify);
+                    filters.add(filterWTIYE);
                 }
                 mBluetoothScanner.startScan(filters, scanSettings, mScanCallback);
             }
