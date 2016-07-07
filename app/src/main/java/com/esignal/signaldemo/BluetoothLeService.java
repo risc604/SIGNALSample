@@ -314,10 +314,8 @@ public class BluetoothLeService extends Service
             @Override
             public void onTick(long millisUntilFinished)
             {
-                long tmp = millisUntilFinished/1000;
-
                 Log.i(TAG, "Countdown second remaining: " + millisUntilFinished);
-                bi.putExtra("countdown", tmp);
+                bi.putExtra("countdown", millisUntilFinished/1000);
                 sendBroadcast(bi);
             }
 
