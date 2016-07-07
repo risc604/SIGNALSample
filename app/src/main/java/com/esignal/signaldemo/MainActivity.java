@@ -461,7 +461,6 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
-        Log.d("Cmd ", "Write Command to device.");
 
         StringBuilder sb= new StringBuilder(testCommand.length);
         for (byte indx: testCommand)
