@@ -77,10 +77,6 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_ENABLE_BT = 1;
     static final float  adResolution = (float) 0.02f;
 
-    List<byte[]>    A0ReciveList = new LinkedList<>();
-    private byte[]  A0Tmp = new byte[14];
-    private byte[]  A1Tmp = new byte[8];
-
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -327,7 +323,6 @@ public class MainActivity extends AppCompatActivity
     protected void onResume()
     {
         super.onResume();
-        A0ReciveList.clear();
 
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
