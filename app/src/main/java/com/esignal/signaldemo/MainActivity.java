@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity
                 if (A0ReciveList!=null)
                 {
                     Utils.writeLogFile(A0ReciveList);
-                    parserData(A0ReciveList);
+                    //parserData(A0ReciveList);
                     A0ReciveList = null;
                 }
                 invalidateOptionsMenu();
@@ -485,7 +485,7 @@ public class MainActivity extends AppCompatActivity
             sb.append(format("%02X", indx));
         }
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
-        InsertMessage("T:" + sb.toString() + "\r\n");
+        InsertMessage("T:" + sb.toString());
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -547,6 +547,7 @@ public class MainActivity extends AppCompatActivity
                     default:
                         break;
                 }
+                messageParser(byteArray);
             }
 
             if(OpenDialog)
@@ -562,7 +563,7 @@ public class MainActivity extends AppCompatActivity
         if (dataList.size()>0) //debug
         {
             //mDataText.setText("");  // clean Text View
-            InsertMessage("");
+            //InsertMessage("");
             for (int i=0; i<dataList.size(); i++)
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
