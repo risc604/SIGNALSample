@@ -470,7 +470,7 @@ public class MainActivity extends AppCompatActivity
             sb.append(format("%02X", indx));
         }
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
-        InsertMessage("C:" + sb.toString());
+        InsertMessage("T:" + sb.toString() + "\r\n");
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -546,7 +546,8 @@ public class MainActivity extends AppCompatActivity
     {
         if (dataList.size()>0) //debug
         {
-            mDataText.setText("");  // clean Text View
+            //mDataText.setText("");  // clean Text View
+            InsertMessage("");
             for (int i=0; i<dataList.size(); i++)
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
