@@ -51,12 +51,12 @@ public class BluetoothLeService extends Service
 {
     private final static String TAG = BluetoothLeService.class.getSimpleName();
 
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeScanner mBluetoothScanner;
+    private BluetoothManager    mBluetoothManager;
+    private BluetoothAdapter    mBluetoothAdapter;
+    private BluetoothLeScanner  mBluetoothScanner;
 
-    private ScanSettings scanSettings;
-    List<ScanFilter> filters;
+    private ScanSettings    scanSettings;
+    List<ScanFilter>        filters;
 
     public BluetoothGatt mBluetoothGatt;
     public String mBluetoothGattAddress;

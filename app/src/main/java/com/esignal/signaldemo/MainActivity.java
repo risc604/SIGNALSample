@@ -76,12 +76,12 @@ public class MainActivity extends AppCompatActivity
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
-    static final float  adResolution = (float) 0.02f;
+    //private final float  adResolution = (float) 0.02f;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
-    private byte[] A0Tmp = new byte[14];
-    private byte[] A1Tmp = new byte[8];
-
+    private byte[]  A0Tmp = new byte[14];    // to void receive the same raw data. (repeat same info)
+    private byte[]  A1Tmp = new byte[14];
+    private byte[]  A2Tmp = new byte[14];
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity
                 //        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
                 //    }
                 //}
-
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {
@@ -159,8 +158,9 @@ public class MainActivity extends AppCompatActivity
             }
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                NCFR_receviceData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
 
+                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 //displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED.equals(action))
@@ -407,12 +407,12 @@ public class MainActivity extends AppCompatActivity
 
     public void cmdA1ack(View v)    // for Button A1ack onClick()
     {
-        CommandTest((byte) 0xA1);
+        commandAction((byte) 0xA1);
     }
 
     public void cmdA0ack(View v)    // for Button A0ack onClick()
     {
-        CommandTest((byte) 0xA0);
+        commandAction((byte) 0xA0);
     }
 
     public void btnResultClock(View v)
@@ -444,7 +444,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void CommandTest(byte command)
+    private void commandAction(byte command)
     {
         byte[] testCommand = new byte[0];
 
@@ -461,13 +461,17 @@ public class MainActivity extends AppCompatActivity
                 testCommand = Utils.mlcTestCommand((byte)0x01);
                 break;
 
+            case (byte) 0xA2:
+                testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x02, (byte) 0xA2, (byte) 0xEF};
+                break;
+
             default:
                 break;
         }
         mBluetoothLeService.writeCharacteristicCMD(testCommand);
         Log.d("Cmd ", "Write Command to device.");
 
-        StringBuilder sb= new StringBuilder(testCommand.length);
+        StringBuilder   sb = new StringBuilder(testCommand.length);
         for (byte indx: testCommand)
         {
             sb.append(format("%02X", indx));
@@ -484,7 +488,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void displayData(String data)
+    //private void displayData(String data)
+    private void NCFR_receviceData(String data)
     {
         if (data != null)
         {
@@ -506,7 +511,7 @@ public class MainActivity extends AppCompatActivity
                         {
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
-                            A0Tmp = byteArray.clone();
+                            A0Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
@@ -518,7 +523,18 @@ public class MainActivity extends AppCompatActivity
                         {
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
-                            A1Tmp = byteArray.clone();
+                            A1Tmp = byteArray.clone();      // keep to check repeat raw data.
+                            //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                        }
+                        break;
+
+                    case (byte) 0xA2:
+                        Log.d("dD()", "A1 Command found.");
+                        if (!java.util.Arrays.equals(A1Tmp, byteArray))
+                        {
+                            Log.d("dD()", "Add A1 receive data to List.");
+                            A0ReciveList.add(byteArray);
+                            A2Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         break;
@@ -555,6 +571,7 @@ public class MainActivity extends AppCompatActivity
     {
         String  A0Message = "";
         String  A1Message = "";
+        String  A2Message = "";
 
         switch (dataInfo[4])
         {
@@ -565,9 +582,12 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    String  ambient = getTemperature(dataInfo[5], dataInfo[6]);
+                    int     tmpIntWord = makeWord(dataInfo[5], dataInfo[6]);
+                    String  ambient = getTemperature(tmpIntWord);
                     String  workModeStr = workMode((byte) ((dataInfo[7] & 0x0080) >>> 7));
-                    String  measure = getTemperature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+
+                    tmpIntWord = makeWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    String  measure = getTemperature(tmpIntWord);
                     String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
                                                     (byte) (dataInfo[12] & 0x003F));
                     String  feverState = ((dataInfo[12] & 0x0040) == 0x0040) ? "fever" : "no fever";
@@ -578,42 +598,74 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                A1Message = workMode(dataInfo[5]) + ", " + batteryState(dataInfo[6]);
+                A1Message = mBluetoothAdapter.getAddress() + "\t\t " +
+                            workMode(dataInfo[11]) + ", " + batteryState(dataInfo[12]);
+                break;
+
+            case (byte) 0xA2:
+                int     CA2Intemp = makeWord(dataInfo[5], dataInfo[6]);
+                String  CA2Parameter = format("CA2 = %04Xh = %04d", CA2Intemp, CA2Intemp);
+
+                int     CA3Intemp = makeWord(dataInfo[7], dataInfo[8]);
+                String  CA3Parameter = format("CA3 = %04Xh = %04d", CA3Intemp, CA3Intemp);
+
+                int     CA3Vol = makeWord(dataInfo[9], dataInfo[10]);
+                float   tmpVoltage = ((float)CA3Vol / 1000.0f);
+                String  CA3Voltage = format("CA3 Voltage = %4.3f uV", tmpVoltage);
+
+                String  CA3Ambient = getTemperature(makeWord(dataInfo[11], dataInfo[12]));
+
+                A2Message = CA2Parameter + ", " + CA3Parameter + ", "
+                          + CA3Voltage + ", CA3 temp: " + CA3Ambient;
                 break;
 
             default:
                 break;
         }
-        InsertMessage(A1Message + A0Message + "\r\n");
+        InsertMessage(A1Message + A0Message + A2Message + "\r\n");
     }
 
     private String workMode(byte mode)
     {
-        String[] tmpStr= new String[]{"Body mode", "Object mode", "Memory mode"};
+        String[] tmpStr= new String[]{"Body", "Object", "Memory", "CAL"};
 
         if ((mode & 0x0080) == 0x80)  mode = 0x01;
         else if (mode > tmpStr.length)
-            return ("mode error, code: " + mode);
+            return ("error mode, code: " + mode);
 
-        return (tmpStr[mode & 0x00ff]);
+        //return (tmpStr[mode & 0x00ff] + " mode");
+        String tmpMode = tmpStr[mode & 0x00ff] + " mode";
+        Log.d("work Mode()", "work mode: " + tmpMode);
+        return tmpMode;
     }
 
-    private String batteryState(byte adValue)
+    private String batteryState(byte deviceBatt)
     {
-        float   tmp = (float) (adResolution * (int) (adValue & 0x00ff));
+        float   BatteryVoltage = ((float) ((int)deviceBatt + 100) / 100.0f);
+        String  tmpString = String.format("%4.2fV", BatteryVoltage);
+        Log.d("batteryState", "Batter Voltage: " + tmpString);
 
-        return (String.format("%4.2fV", tmp));
+        return (tmpString);
     }
 
-    private String getTemperature(byte dataH, byte dataL)
+    private int makeWord(byte dataH, byte dataL)
     {
         int     tmpValue=0;
+
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
-        float ftmp = ((float) tmpValue) / 100;
+        Log.d("makeWord", " merge 2 byte: " + tmpValue);
+        return tmpValue;
+    }
 
-        return(String.format("%4.2f℃", ftmp));
+    private String getTemperature(int value)
+    {
+        float   ftmp = ((float) value) / 100;
+        String  tmpString = String.format("%4.2f℃", ftmp);
+        Log.d("getTemperature", " Temperature: " + tmpString);
+
+        return(tmpString);
     }
 
     private String measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
@@ -638,7 +690,7 @@ public class MainActivity extends AppCompatActivity
 
     private String errorMessage(byte info)
     {
-        String[]  ErrorMessage = {"Amb H", "Amb L", "Body H", "Body L"};
+        String[]  ErrorMessage = {"amb H", "amb L", "body H", "body L"};
 
         if (info > ErrorMessage.length)
             return ("Unknown, Error! Code: " +  Integer.toHexString(info & 0x003f));
@@ -646,6 +698,8 @@ public class MainActivity extends AppCompatActivity
             return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
 
+
+    
     @Override
     public void onStop()
     {
