@@ -14,7 +14,9 @@ public class SampleGattAttributes
     public static String NOTIFY_CHARACTERISTIC = "0000fff1-0000-1000-8000-00805f9b34fb";
     public static String WTIYE_CHARACTERISTIC = "0000fff2-0000-1000-8000-00805f9b34fb";
 
-    static {
+    /*
+    static
+    {
         // Sample Services.
         //attributes.put("0000180d-0000-1000-8000-00805f9b34fb", "Heart Rate Service");
         attributes.put("0000180a-0000-1000-8000-00805f9b34fb", "Device Information Service");
@@ -25,6 +27,7 @@ public class SampleGattAttributes
         attributes.put("SetNotifiable", "SetNotifiable");
         attributes.put("SendCommand", "SendCommand");
     }
+    */
 
     public static String lookup(String uuid, String defaultName)
     {

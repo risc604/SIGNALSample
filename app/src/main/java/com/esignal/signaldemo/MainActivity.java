@@ -421,10 +421,12 @@ public class MainActivity extends AppCompatActivity
         mBluetoothLeService.disconnect();
     }
 
+    /*
     private void displayGattServices(List<BluetoothGattService> gattServices)
     {
         if (gattServices == null) return;
     }
+    */
 
     @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
     private void appVersion()
@@ -699,7 +701,7 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    
+
     @Override
     public void onStop()
     {
