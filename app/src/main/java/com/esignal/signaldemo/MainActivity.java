@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
 
+    private final String    nextLine = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
     //private final float  adResolution = (float) 0.02f;
@@ -428,7 +429,7 @@ public class MainActivity extends AppCompatActivity
     }
     */
 
-    @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
+    //@TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
     private void appVersion()
     {
         try
@@ -479,7 +480,7 @@ public class MainActivity extends AppCompatActivity
             sb.append(format("%02X", indx));
         }
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
-        InsertMessage("T:" + sb.toString() + "\r\n");
+        InsertMessage("T:" + sb.toString() + nextLine);
     }
 
     private void LogDebugShow(String info, byte[] data)
@@ -617,14 +618,14 @@ public class MainActivity extends AppCompatActivity
 
                 String  CA3Ambient = getTemperature(makeWord(dataInfo[11], dataInfo[12]));
 
-                A2Message = CA2Parameter + ", " + CA3Parameter + ", "
+                A2Message = CA2Parameter + ", " + CA3Parameter + nextLine
                           + CA3Voltage + ", CA3 temp: " + CA3Ambient;
                 break;
 
             default:
                 break;
         }
-        InsertMessage(A1Message + A0Message + A2Message + "\r\n");
+        InsertMessage(A1Message + A0Message + A2Message + nextLine);
     }
 
     private String workMode(byte mode)
@@ -643,7 +644,7 @@ public class MainActivity extends AppCompatActivity
 
     private String batteryState(byte deviceBatt)
     {
-        float   BatteryVoltage = ((float) ((int)deviceBatt + 100) / 100.0f);
+        float   BatteryVoltage = ((float) ((int)(deviceBatt & 0x00ff) + 100) / 100.0f);
         String  tmpString = String.format("%4.2fV", BatteryVoltage);
         Log.d("batteryState", "Batter Voltage: " + tmpString);
 
@@ -814,7 +815,7 @@ public class MainActivity extends AppCompatActivity
     private void InsertMessage(String Message)
     {
         //mDataText.setText(mDataText.getText()+Message);
-        mDataText.setText(mDataText.getText()+Message+"\r\n");
+        mDataText.setText(mDataText.getText()+Message+ nextLine);
         //mDataText.append(Message);
         mScroller.fullScroll(ScrollView.FOCUS_DOWN);
     }
