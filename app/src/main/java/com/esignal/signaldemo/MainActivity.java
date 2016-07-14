@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity
                     progressDialog.dismiss();
                 }
 
-                //parserList(A0ReciveList);
+                //parserData(A0ReciveList);
                 //if (A0ReciveList.size()>0) //debug
                 //{
                 //    for (int i=0; i<A0ReciveList.size(); i++)
@@ -418,7 +418,7 @@ public class MainActivity extends AppCompatActivity
 
     public void btnResultClock(View v)
     {
-        parserList(A0ReciveList);
+        parserData(A0ReciveList);
         mBluetoothLeService.disconnect();
     }
 
@@ -533,7 +533,7 @@ public class MainActivity extends AppCompatActivity
 
                     case (byte) 0xA2:
                         Log.d("dD()", "A1 Command found.");
-                        if (!java.util.Arrays.equals(A2Tmp, byteArray))
+                        if (!java.util.Arrays.equals(A1Tmp, byteArray))
                         {
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
@@ -555,7 +555,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void parserList(List<byte[]> dataList)
+    private void parserData(List<byte[]> dataList)
     {
         if (dataList.size()>0) //debug
         {
@@ -565,8 +565,7 @@ public class MainActivity extends AppCompatActivity
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
                 //LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
-                if(csState(dataList.get(i)))
-                    parserRawData(dataList.get(i));
+                parserRawData(dataList.get(i));
             }
         }
     }
@@ -586,11 +585,11 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    int     tmpIntWord = byteToWord(dataInfo[5], dataInfo[6]);
+                    int     tmpIntWord = makeWord(dataInfo[5], dataInfo[6]);
                     String  ambient = getTemperature(tmpIntWord);
                     String  workModeStr = workMode((byte) ((dataInfo[7] & 0x0080) >>> 7));
 
-                    tmpIntWord = byteToWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    tmpIntWord = makeWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
                     String  measure = getTemperature(tmpIntWord);
                     String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
                                                     (byte) (dataInfo[12] & 0x003F));
@@ -602,22 +601,22 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                A1Message = mBluetoothAdapter.getAddress() + "\t\t " +
-                            workMode(dataInfo[11]) + ", " + batteryState(dataInfo[12]);
+                A1Message = getMACAddress(dataInfo) + workMode(dataInfo[11])
+                            + ", " + batteryState(dataInfo[12]);
                 break;
 
             case (byte) 0xA2:
-                int     CA2Intemp = byteToWord(dataInfo[5], dataInfo[6]);
+                int     CA2Intemp = makeWord(dataInfo[5], dataInfo[6]);
                 String  CA2Parameter = format("CA2 = %04Xh = %04d", CA2Intemp, CA2Intemp);
 
-                int     CA3Intemp = byteToWord(dataInfo[7], dataInfo[8]);
+                int     CA3Intemp = makeWord(dataInfo[7], dataInfo[8]);
                 String  CA3Parameter = format("CA3 = %04Xh = %04d", CA3Intemp, CA3Intemp);
 
-                int     CA3Vol = byteToWord(dataInfo[9], dataInfo[10]);
+                int     CA3Vol = makeWord(dataInfo[9], dataInfo[10]);
                 float   tmpVoltage = ((float)CA3Vol / 1000.0f);
                 String  CA3Voltage = format("CA3 Voltage = %4.3f uV", tmpVoltage);
 
-                String  CA3Ambient = getTemperature(byteToWord(dataInfo[11], dataInfo[12]));
+                String  CA3Ambient = getTemperature(makeWord(dataInfo[11], dataInfo[12]));
 
                 A2Message = CA2Parameter + ", " + CA3Parameter + nextLine
                           + CA3Voltage + ", CA3 temp: " + CA3Ambient;
@@ -627,6 +626,12 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
         InsertMessage(A1Message + A0Message + A2Message + nextLine);
+    }
+
+    private String getMACAddress(byte[] data)
+    {
+        return String.format("MAC %02X:%02X:%02X:%02X:%02X:%02X\t",
+                (byte)data[5], data[6], data[7], data[8], data[9], data[10]);
     }
 
     private String workMode(byte mode)
@@ -652,15 +657,15 @@ public class MainActivity extends AppCompatActivity
         return (tmpString);
     }
 
-    private int byteToWord(byte dataH, byte dataL)
+    private int makeWord(byte dataH, byte dataL)
     {
         int     tmpValue=0;
 
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
-        Log.d("byteToWord", " merge 2 byte: " + tmpValue);
-        return (tmpValue & 0x0000ffff);
+        Log.d("makeWord", " merge 2 byte: " + tmpValue);
+        return tmpValue;
     }
 
     private String getTemperature(int value)
@@ -699,28 +704,8 @@ public class MainActivity extends AppCompatActivity
         if (info > ErrorMessage.length)
             return ("Unknown, Error! Code: " +  Integer.toHexString(info & 0x003f));
         else
-            return ("Error for " + ErrorMessage[(info & 0x003f)]);
+            return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
-
-    private boolean csState(byte[] data)
-    {
-        int tempCS = 0;
-
-        for (int i=0; i<(data.length-1); i++)
-        {
-            tempCS += data[i];
-        }
-        Log.d("csState()", "byte array CS: " + tempCS);
-
-        if ((tempCS & 0x00ff) == (data[data.length-1] & 0x00ff))
-            return true;
-        else
-        {
-            InsertMessage("data list check sum Error !!");
-            return false;
-        }
-    }
-
 
 
 
