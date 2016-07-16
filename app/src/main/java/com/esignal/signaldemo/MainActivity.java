@@ -73,9 +73,10 @@ public class MainActivity extends AppCompatActivity
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
 
+    private final String    NEXTLINE = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
-    static final float  adResolution = (float) 0.02f;
+    //static final float  adResolution = (float) 0.02f;
 
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
@@ -145,8 +146,9 @@ public class MainActivity extends AppCompatActivity
             else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
             {
                 mBluetoothLeService.cdt.cancel();
-                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                NCFR_receviceData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
 
+                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 //displayData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_GATT_DEVICE_DISCOVERED.equals(action))
@@ -408,18 +410,20 @@ public class MainActivity extends AppCompatActivity
 
     public void cmdA1ack(View v)    // for Button A1ack onClick()
     {
-        CommandTest((byte) 0xA1);
+        CommandAction((byte) 0xA1);
     }
 
     public void cmdA0ack(View v)    // for Button A0ack onClick()
     {
-        CommandTest((byte) 0xA0);
+        CommandAction((byte) 0xA0);
     }
 
+    /*
     private void displayGattServices(List<BluetoothGattService> gattServices)
     {
         if (gattServices == null) return;
     }
+    */
 
     @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
     private void appVersion()
@@ -440,7 +444,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void CommandTest(byte command)
+    private void CommandAction(byte command)
     {
         byte[] testCommand = new byte[0];
 
@@ -455,6 +459,10 @@ public class MainActivity extends AppCompatActivity
 
             case (byte) 0xA1:
                 testCommand = Utils.mlcTestCommand((byte)0x01);
+                break;
+
+            case (byte) 0xA2:
+                testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x02, (byte) 0xA2, (byte) 0xEF};
                 break;
 
             default:
@@ -479,39 +487,46 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void displayData(String data)
+    private void NCFR_receviceData(String data)
     {
         if (data != null)
         {
             byte[] byteArray = hexStringToByteArray(data);
-            Log.d("display Data", "device: " + data);
+            Log.d("NCFR_receviceData", "device: " + data);
 
             if (byteArray[0] == 'M')
             {
                 InsertMessage("R:" + data);
-                Log.d("Dd()", " bA[4]: " + format("%02X", byteArray[4]) + ": "
+                Log.d("NCFR_receviceData", " bA[4]: " + format("%02X", byteArray[4]) + ": "
                         + mBluetoothLeService.mBluetoothGattConnected);
 
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
-                        Log.d("dD()", "Receive A0 command.");
+                        Log.d("NCFR_receviceData", "Receive A0 command.");
                         mBluetoothLeService.cdt.start();
-                        CommandTest((byte) 0xA0);
-                        Log.d("0xA1 Ack", "sent A1 Ack to NCFR.");
+                        CommandAction((byte) 0xA0);
+                        Log.d("NCFR_receviceData", "sent A0 Ack to NCFR.");
                         break;
 
                     case (byte) 0xA1:
-                        Log.d("dD()", "Receive A1 Command.");
+                        Log.d("NCFR_receviceData", "Receive A1 Command.");
                         mBluetoothLeService.cdt.start();
-                        CommandTest((byte) 0xA1);
-                        Log.d("0xA0 Ack", "sent A0 Ack to NCFR.");
+                        CommandAction((byte) 0xA1);
+                        Log.d("NCFR_receviceData", "sent A1 Ack to NCFR.");
+                        break;
+
+                    case (byte) 0xA2:
+                        Log.d("NCFR_receviceData", "Receive A2 Command.");
+                        mBluetoothLeService.cdt.start();
+                        CommandAction((byte) 0xA2);
+                        Log.d("NCFR_receviceData", "sent A2 Ack to NCFR.");
                         break;
 
                     default:
                         break;
                 }
-                messageParser(byteArray);
+                parserRawData(byteArray);
                 mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
             }
 
@@ -523,10 +538,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void messageParser(byte[] dataInfo)
+    private void parserRawData(byte[] dataInfo)
     {
         String  A0Message = "";
         String  A1Message = "";
+        String  A2Message = "";
 
         switch (dataInfo[4])
         {
@@ -537,9 +553,12 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    String  ambient = getTemperature(dataInfo[5], dataInfo[6]);
+                    int     tmpIntWord = byteToWord(dataInfo[5], dataInfo[6]);
+                    String  ambient = getTemperature(tmpIntWord);
                     String  workModeStr = workMode((byte) ((dataInfo[7] & 0x0080) >>> 7));
-                    String  measure = getTemperature((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+
+                    tmpIntWord = byteToWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    String  measure = getTemperature(tmpIntWord);
                     String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
                                                     (byte) (dataInfo[12] & 0x003F));
                     String  feverState = ((dataInfo[12] & 0x0040) == 0x0040) ? "fever" : "no fever";
@@ -550,39 +569,76 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                A1Message = workMode(dataInfo[5]) + ", " + batteryState(dataInfo[6]);
+                A1Message = getMACAddress(dataInfo) + workMode(dataInfo[11])
+                        + ", " + batteryState(dataInfo[12]);
+                break;
+
+            case (byte) 0xA2:
+                int     CA2Intemp = byteToWord(dataInfo[5], dataInfo[6]);
+                String  CA2Parameter = format("CA2 = %04Xh = %04d", CA2Intemp, CA2Intemp);
+
+                int     CA3Intemp = byteToWord(dataInfo[7], dataInfo[8]);
+                String  CA3Parameter = format("CA3 = %04Xh = %04d", CA3Intemp, CA3Intemp);
+
+                int     CA3Vol = byteToWord(dataInfo[9], dataInfo[10]);
+                float   tmpVoltage = ((float)CA3Vol / 1000.0f);
+                String  CA3Voltage = format("CA3 Voltage = %4.3f uV", tmpVoltage);
+
+                String  CA3Ambient = getTemperature(byteToWord(dataInfo[11], dataInfo[12]));
+
+                A2Message = CA2Parameter + ", " + CA3Parameter + NEXTLINE
+                        + CA3Voltage + ", CA3 temp: " + CA3Ambient;
                 break;
 
             default:
                 break;
         }
-        InsertMessage(A1Message + A0Message + "\r\n");
+        InsertMessage(A1Message + A0Message + A2Message + NEXTLINE);
+    }
+
+    private String getMACAddress(byte[] data)
+    {
+        return String.format("MAC %02X:%02X:%02X:%02X:%02X:%02X\t",
+                (byte)data[5], data[6], data[7], data[8], data[9], data[10]);
     }
 
     private String workMode(byte mode)
     {
-        String[] tmpStr= new String[]{"Body mode", "Object mode", "Memory mode"};
+        String[] tmpStr= new String[]{"Body", "Object", "Memory", "CAL"};
 
         if ((mode & 0x0080) == 0x80)  mode = 0x01;
         else if (mode > tmpStr.length)
-            return ("mode error, code: " + mode);
+            return ("error mode, code: " + mode);
 
-        return (tmpStr[mode & 0x00ff]);
+        //return (tmpStr[mode & 0x00ff]);
+        String tmpMode = tmpStr[mode & 0x00ff] + " mode";
+        Log.d("work Mode()", "work mode: " + tmpMode);
+        return tmpMode;
     }
 
-    private String batteryState(byte adValue)
+    private String batteryState(byte deviceBatt)
     {
-        float   tmp = (float) (adResolution * (int) (adValue & 0x00ff));
+        float   BatteryVoltage = ((float) ((int)(deviceBatt & 0x00ff) + 100) / 100.0f);
+        String  tmpString = String.format("%4.2fV", BatteryVoltage);
+        Log.d("batteryState", "Batter Voltage: " + tmpString);
 
-        return (String.format("%4.2fV", tmp));
+        return (tmpString);
     }
 
-    private String getTemperature(byte dataH, byte dataL)
+    private int byteToWord(byte dataH, byte dataL)
     {
         int     tmpValue=0;
+
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
+        Log.d("makeWord", " merge 2 byte: " + tmpValue);
+        return tmpValue;
+    }
+
+
+    private String getTemperature(int tmpValue)
+    {
         float ftmp = ((float) tmpValue) / 100;
 
         return(String.format("%4.2f℃", ftmp));
