@@ -549,7 +549,7 @@ public class MainActivity extends AppCompatActivity
             case (byte) 0xA0:
                 if ((dataInfo[12] & 0x0080) == 0x0080)  //check Error
                 {
-                    A0Message = measureError((byte) (dataInfo[12] & 0x003F));
+                    A0Message = errorMessage((byte) (dataInfo[12] & 0x003F));
                 }
                 else
                 {
@@ -632,16 +632,18 @@ public class MainActivity extends AppCompatActivity
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
-        Log.d("makeWord", " merge 2 byte: " + tmpValue);
+        Log.d("byteToWord", " merge 2 byte: " + tmpValue);
         return tmpValue;
     }
 
 
     private String getTemperature(int tmpValue)
     {
-        float ftmp = ((float) tmpValue) / 100;
+        float   ftmp = ((float) tmpValue) / 100;
+        String  tmpStr = String.format("%4.2f℃", ftmp);
+        Log.d("getTemperature", "Temperature: " + tmpStr);
 
-        return(String.format("%4.2f℃", ftmp));
+        return(tmpStr);
     }
 
     private String measureTime(byte mDay, byte mHour, byte mMinute, byte mYear)
@@ -664,10 +666,11 @@ public class MainActivity extends AppCompatActivity
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
     }
 
-    private String measureError(byte info)
+    private String errorMessage(byte info)
     {
-        String[]  ErrorMessage = {"Amb H", "Amb L", "Body H", "Body L"};
+        String[]  ErrorMessage = {"amb H", "amb L", "body H", "body L"};
 
+        Log.d("errorMessage", "error code: " + info);
         if (info > ErrorMessage.length)
             return ("Unknown, Error! Code: " +  Integer.toHexString(info & 0x003f));
         else
@@ -786,7 +789,6 @@ public class MainActivity extends AppCompatActivity
     {
         //mDataText.setText(mDataText.getText()+Message);
         mDataText.setText(mDataText.getText()+Message+"\r\n");
-        //mDataText.append(Message);
         mScroller.fullScroll(ScrollView.FOCUS_DOWN);
     }
 
