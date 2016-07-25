@@ -2,5 +2,5 @@
     <string name="app_name">NC150 BLE Demo</string>
     <string name="action_settings">Settings</string>
     <string name="barTitle">NCFR BLE </string>
-    <string name="a0_ack">A0 ACK</string>
+    <string name="ack">ACK</string>
 </resources>

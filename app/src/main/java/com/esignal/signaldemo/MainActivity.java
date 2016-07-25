@@ -59,9 +59,8 @@ public class MainActivity extends AppCompatActivity
     Context         mContext;
     PopupWindow     mPopupWindow;
     ProgressDialog  progressDialog;
-    Button      Btn_A0ack;
-    Button      Btn_A1ack;
-    Button      Btn_Result;
+    Button      btnAck;
+    Button      btnResult;
     TextView    mDataText;
     TextView    mConnect;
     ScrollView  mScroller;
@@ -77,7 +76,7 @@ public class MainActivity extends AppCompatActivity
     private final String    nextLine = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int REQUEST_ENABLE_BT = 1;
-    //private final float  adResolution = (float) 0.02f;
+    private byte ackCommand = (byte)0xff;
 
     List<byte[]>    A0ReciveList = new LinkedList<>();
     private byte[]  A0Tmp = new byte[14];    // to void receive the same raw data. (repeat same info)
@@ -188,9 +187,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mContext = this.getApplicationContext();
 
-        Btn_A0ack = (Button) findViewById(R.id.btn_A0ack);
-        Btn_A1ack = (Button) findViewById(R.id.btn_A1ack);
-        Btn_Result = (Button) findViewById(R.id.btnResult);
+        btnAck = (Button) findViewById(R.id.btn_Ack);
+        btnResult = (Button) findViewById(R.id.btnResult);
         mDataText = (TextView) findViewById(R.id.DataText);
         mScroller = (ScrollView) findViewById(R.id.Scroller);
         mConnect = (TextView) findViewById(R.id.textView);
@@ -406,14 +404,38 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void cmdA1ack(View v)    // for Button A1ack onClick()
+    public void commandAck(View v)    // for Button Ack onClick()
     {
-        commandAction((byte) 0xA1);
+        byte    cmdAck = getAckCommand();
+        Log.d("commandAck", "cmdAck: " + cmdAck);
+
+        switch (cmdAck)
+        {
+            case (byte) 0xA0:
+                commandAction((byte) 0xA0);
+                break;
+
+            case (byte) 0xA1:
+                commandAction((byte) 0xA0);
+                break;
+
+            case (byte) 0xA2:
+                commandAction((byte) 0xA0);
+                break;
+
+            default:
+                break;
+        }
     }
 
-    public void cmdA0ack(View v)    // for Button A0ack onClick()
+    private void setAckCommand(byte command)    // command for Ack
     {
-        commandAction((byte) 0xA0);
+        ackCommand = command;
+    }
+
+    private byte getAckCommand()
+    {
+        return ackCommand;
     }
 
     public void btnResultClock(View v)
@@ -506,6 +528,7 @@ public class MainActivity extends AppCompatActivity
                         + mBluetoothLeService.mBluetoothGattConnected);
 
                 //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
+                setAckCommand(byteArray[4]);
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
@@ -517,6 +540,7 @@ public class MainActivity extends AppCompatActivity
                             A0Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
+                        btnAck.setText("A0 ACK");
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                         break;
 
@@ -529,6 +553,7 @@ public class MainActivity extends AppCompatActivity
                             A1Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
+                        btnAck.setText("A1 ACK");
                         break;
 
                     case (byte) 0xA2:
@@ -540,6 +565,7 @@ public class MainActivity extends AppCompatActivity
                             A2Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
+                        btnAck.setText("A2 ACK");
                         break;
 
                     default:
