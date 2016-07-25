@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity
     boolean SearchBLE = false;
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
+    private boolean flagCALMod = false;
 
     private final String    nextLine = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity
     private byte[]  A0Tmp = new byte[14];    // to void receive the same raw data. (repeat same info)
     private byte[]  A1Tmp = new byte[14];
     private byte[]  A2Tmp = new byte[14];
+    private byte[]  macAddr = new byte[6];
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -407,20 +409,20 @@ public class MainActivity extends AppCompatActivity
     public void commandAck(View v)    // for Button Ack onClick()
     {
         byte    cmdAck = getAckCommand();
-        Log.d("commandAck", "cmdAck: " + cmdAck);
+        Log.d("commandAck", format("cmdAck: %02x", cmdAck));
 
         switch (cmdAck)
         {
             case (byte) 0xA0:
-                commandAction((byte) 0xA0);
+                ackAction((byte) 0xA0);
                 break;
 
             case (byte) 0xA1:
-                commandAction((byte) 0xA0);
+                ackAction((byte) 0xA1);
                 break;
 
             case (byte) 0xA2:
-                commandAction((byte) 0xA0);
+                ackAction((byte) 0xA2);
                 break;
 
             default:
@@ -451,25 +453,7 @@ public class MainActivity extends AppCompatActivity
     }
     */
 
-    //@TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
-    private void appVersion()
-    {
-        try
-        {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            int     versionCode = packageInfo.versionCode;
-            String  versionName = packageInfo.versionName;
-            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-            toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
-            Log.d("AppVersion", "Ver." + versionName + "." + versionCode);
-        }
-        catch (PackageManager.NameNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    private void commandAction(byte command)
+    private void ackAction(byte command)
     {
         byte[] testCommand = new byte[0];
 
@@ -483,7 +467,26 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                testCommand = Utils.mlcTestCommand((byte)0x01);
+                Log.d("AckAction", "flag: " + flagCALMod);
+                if (flagCALMod)
+                {
+                    int tmpCS = 0;
+                    testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x08, (byte) 0x01,
+                            (byte) macAddr[0], (byte) macAddr[1], (byte) macAddr[2],
+                            (byte) macAddr[3], (byte) macAddr[4], (byte) macAddr[5], 0x00};
+
+                    for (int i=0; i<testCommand.length-1; i++)  //CS
+                    {
+                        tmpCS += testCommand[i];
+                        Log.d("testCommand", format("[%d] = %02X", i, testCommand[i] ));
+                    }
+                    testCommand[testCommand.length-1] = (byte)(tmpCS & 0x00ff);
+                    flagCALMod = false;
+                }
+                else
+                {
+                    testCommand = Utils.mlcTestCommand((byte) 0x01);
+                }
                 break;
 
             case (byte) 0xA2:
@@ -504,6 +507,25 @@ public class MainActivity extends AppCompatActivity
         Log.d("Cmd ", "Write Command to NC150: " + sb.toString());
         InsertMessage("T:" + sb.toString() + nextLine);
     }
+
+    //@TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
+    private void appVersion()
+    {
+        try
+        {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            int     versionCode = packageInfo.versionCode;
+            String  versionName = packageInfo.versionName;
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            toolbar.setTitle(toolbar.getTitle() + "\t\t\t v" + versionName + "." + Integer.toString(versionCode));
+            Log.d("AppVersion", "Ver." + versionName + "." + versionCode);
+        }
+        catch (PackageManager.NameNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
 
     private void LogDebugShow(String info, byte[] data)
     {
@@ -529,6 +551,7 @@ public class MainActivity extends AppCompatActivity
 
                 //if ((byteArray[4] == 0xa0) && (mBluetoothLeService.mBluetoothGattConnected) )
                 setAckCommand(byteArray[4]);
+
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
@@ -540,7 +563,7 @@ public class MainActivity extends AppCompatActivity
                             A0Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A0 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
-                        btnAck.setText("A0 ACK");
+                        //btnAck.setText("A0 ACK");
                         Log.d("Dd()", "A0 List Size: " + A0ReciveList.size());
                         break;
 
@@ -551,13 +574,20 @@ public class MainActivity extends AppCompatActivity
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A1Tmp = byteArray.clone();      // keep to check repeat raw data.
+                            if ((byteArray[11] & 0x00ff) == 0x03)      // CAL mode.
+                            {
+                                for (int i=0; i<6; i++)
+                                    macAddr[i] = byteArray[5+i];
+                                flagCALMod = true;
+                                Log.d("receviceData", "CAL mode A1 Ack flag, " + flagCALMod);
+                            }
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
-                        btnAck.setText("A1 ACK");
+                        //btnAck.setText("A1 ACK");
                         break;
 
                     case (byte) 0xA2:
-                        Log.d("dD()", "A1 Command found.");
+                        Log.d("dD()", "A2 Command found.");
                         if (!java.util.Arrays.equals(A1Tmp, byteArray))
                         {
                             Log.d("dD()", "Add A1 receive data to List.");
@@ -565,7 +595,7 @@ public class MainActivity extends AppCompatActivity
                             A2Tmp = byteArray.clone();      // keep to check repeat raw data.
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
-                        btnAck.setText("A2 ACK");
+                        //btnAck.setText("A2 ACK");
                         break;
 
                     default:
@@ -644,8 +674,8 @@ public class MainActivity extends AppCompatActivity
 
                 String  CA3Ambient = getTemperature(makeWord(dataInfo[11], dataInfo[12]));
 
-                A2Message = CA2Parameter + ", " + CA3Parameter + nextLine
-                          + CA3Voltage + ", CA3 temp: " + CA3Ambient;
+                A2Message = CA2Parameter + ", " + nextLine + CA3Parameter + nextLine
+                          + CA3Voltage + nextLine + "CA3 temp: " + CA3Ambient;
                 break;
 
             default:
