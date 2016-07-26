@@ -415,6 +415,7 @@ public class MainActivity extends AppCompatActivity
     public void btnResultClock(View v)
     {
         parserData(A0ReciveList);
+        Log.d("ResultButton", "A0ReciveList: " + A0ReciveList.size());
         mBluetoothLeService.disconnect();
     }
 
@@ -541,6 +542,8 @@ public class MainActivity extends AppCompatActivity
                         Log.d("dD()", "A1 Command found.");
                         if (!java.util.Arrays.equals(A1Tmp, byteArray))
                         {
+                            //A0ReciveList.clear();
+                            //mDataText.setText("");
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A1Tmp = byteArray.clone();      // keep to check repeat raw data.
@@ -558,12 +561,12 @@ public class MainActivity extends AppCompatActivity
 
                     case (byte) 0xA2:
                         Log.d("dD()", "A2 Command found.");
-                        if (!java.util.Arrays.equals(A1Tmp, byteArray))
+                        if (!java.util.Arrays.equals(A2Tmp, byteArray))
                         {
                             Log.d("dD()", "Add A1 receive data to List.");
                             A0ReciveList.add(byteArray);
                             A2Tmp = byteArray.clone();      // keep to check repeat raw data.
-                            //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
+                            //LogDebugShow("A2 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }
                         //btnAck.setText("A2 ACK");
                         break;
@@ -593,6 +596,8 @@ public class MainActivity extends AppCompatActivity
                 //LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
                 if (csCheck(dataList.get(i)))
                     parserRawData(dataList.get(i));
+                else
+                    InsertMessage("Error, parser lsit data item CS fail.");
             }
         }
     }
@@ -789,12 +794,18 @@ public class MainActivity extends AppCompatActivity
         popupList.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
                 dismissPopupWindow();
                 mDataText.setText("");
                 OpenDialog("BLE Status", "Try to connect with device...");
                 scanLeDevice(false);
-                mBluetoothLeService.connect(mLeDeviceListAdapter.getDevice(position));
+                boolean flag = mBluetoothLeService.connect(mLeDeviceListAdapter.getDevice(position));
+                if (flag)
+                {
+                    A0ReciveList.clear();
+                    mDataText.setText("");
+                }
             }
         });
 
