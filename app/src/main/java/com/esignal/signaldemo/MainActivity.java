@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity
     boolean SearchBLE = false;
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
+    private byte[]  macAddr = new byte[6];
 
     private final String    NEXTLINE = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -410,12 +411,12 @@ public class MainActivity extends AppCompatActivity
 
     public void cmdA1ack(View v)    // for Button A1ack onClick()
     {
-        CommandAction((byte) 0xA1);
+        ackAction((byte) 0xA1, false);
     }
 
     public void cmdA0ack(View v)    // for Button A0ack onClick()
     {
-        CommandAction((byte) 0xA0);
+        ackAction((byte) 0xA0, false);
     }
 
     /*
@@ -444,7 +445,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void CommandAction(byte command)
+    private void ackAction(byte command, boolean flag)
     {
         byte[] testCommand = new byte[0];
 
@@ -458,7 +459,25 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                testCommand = Utils.mlcTestCommand((byte)0x01);
+                if (flag)
+                {
+                    int tmpCS = 0;
+                    testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x08, (byte) 0x01,
+                            (byte) macAddr[0], (byte) macAddr[1], (byte) macAddr[2],
+                            (byte) macAddr[3], (byte) macAddr[4], (byte) macAddr[5], 0x00};
+
+                    for (int i=0; i<testCommand.length-1; i++)  //CS
+                    {
+                        tmpCS += testCommand[i];
+                        Log.d("testCommand", format("[%d] = %02X", i, testCommand[i] ));
+                    }
+                    testCommand[testCommand.length-1] = (byte)(tmpCS & 0x00ff);
+                }
+                else
+                {
+
+                    testCommand = Utils.mlcTestCommand((byte) 0x01);
+                }
                 break;
 
             case (byte) 0xA2:
@@ -496,36 +515,49 @@ public class MainActivity extends AppCompatActivity
 
             if (byteArray[0] == 'M')
             {
+                boolean flagCALMod = false;
                 InsertMessage("R:" + data);
                 Log.d("NCFR_receviceData", " bA[4]: " + format("%02X", byteArray[4]) + ": "
                         + mBluetoothLeService.mBluetoothGattConnected);
 
+                /*
                 switch (byteArray[4])
                 {
                     case (byte) 0xA0:
                         Log.d("NCFR_receviceData", "Receive A0 command.");
                         mBluetoothLeService.cdt.start();
-                        CommandAction((byte) 0xA0);
+                        ackAction((byte) 0xA0);
                         Log.d("NCFR_receviceData", "sent A0 Ack to NCFR.");
                         break;
 
                     case (byte) 0xA1:
                         Log.d("NCFR_receviceData", "Receive A1 Command.");
                         mBluetoothLeService.cdt.start();
-                        CommandAction((byte) 0xA1);
+                        ackAction((byte) 0xA1);
                         Log.d("NCFR_receviceData", "sent A1 Ack to NCFR.");
                         break;
 
                     case (byte) 0xA2:
                         Log.d("NCFR_receviceData", "Receive A2 Command.");
                         mBluetoothLeService.cdt.start();
-                        CommandAction((byte) 0xA2);
+                        ackAction((byte) 0xA2);
                         Log.d("NCFR_receviceData", "sent A2 Ack to NCFR.");
                         break;
 
                     default:
                         break;
                 }
+                */
+                if (((byteArray[4] & 0x00ff) == 0xA1) && ((byteArray[11] & 0x00ff) == 0x03))
+                {
+                    for (int i=0; i<macAddr.length; i++)
+                        macAddr[0] = byteArray[5+i];
+                    flagCALMod = true;
+                }
+                Log.d("NCFR_receviceData", "cmd: " + byteArray[4] + " to ACK.");
+                mBluetoothLeService.cdt.start();
+                ackAction((byte) byteArray[4], flagCALMod);
+
                 parserRawData(byteArray);
                 mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
             }
@@ -586,8 +618,8 @@ public class MainActivity extends AppCompatActivity
 
                 String  CA3Ambient = getTemperature(byteToWord(dataInfo[11], dataInfo[12]));
 
-                A2Message = CA2Parameter + ", " + CA3Parameter + NEXTLINE
-                        + CA3Voltage + ", CA3 temp: " + CA3Ambient;
+                A2Message = CA2Parameter + ", " + NEXTLINE + CA3Parameter + NEXTLINE
+                          + CA3Voltage + NEXTLINE + "CA3 temp: " + CA3Ambient;
                 break;
 
             default:
