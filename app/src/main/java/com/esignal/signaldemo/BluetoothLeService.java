@@ -86,7 +86,6 @@ public class BluetoothLeService extends Service
     public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
 
     private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
-    static final String HEXES = "0123456789ABCDEF";
     private Handler handler = new Handler();
 
 
@@ -577,20 +576,6 @@ public class BluetoothLeService extends Service
     }
     */
 
-    public static String getHexToString(byte[] raw)
-    {
-        if (raw == null)
-        {
-            return null;
-        }
-        final StringBuilder hex = new StringBuilder(2 * raw.length);
-        for (final byte b : raw)
-        {
-            hex.append(HEXES.charAt((b & 0xF0) >> 4))
-                    .append(HEXES.charAt((b & 0x0F)));
-        }
-        return hex.toString();
-    }
     //*/
 
     private Runnable TimeOUTCheckTimer = new Runnable()

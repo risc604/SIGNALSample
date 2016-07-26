@@ -39,7 +39,7 @@
             android:layout_width="74dp"
             android:layout_height="match_parent"
             android:text="@string/ack"
-            android:id="@+id/btn_Ack" android:onClick="commandAck"
+            android:id="@+id/btn_Ack" android:onClick="btnAckClick"
             android:layout_alignBottom="@+id/linearLayout1"/>
     </LinearLayout>
 

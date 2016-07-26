@@ -142,16 +142,6 @@ public class MainActivity extends AppCompatActivity
                     OpenDialog=false;
                     progressDialog.dismiss();
                 }
-
-                //parserData(A0ReciveList);
-                //if (A0ReciveList.size()>0) //debug
-                //{
-                //    for (int i=0; i<A0ReciveList.size(); i++)
-                //    {
-                //        //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
-                //        LogDebugShow("Srv Event[" + i + "]", A0ReciveList.get(i));
-                //    }
-                //}
             }
             else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action))
             {
@@ -181,7 +171,6 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -208,20 +197,17 @@ public class MainActivity extends AppCompatActivity
         });
 
         appVersion();
-
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, "Please turn Bluetooth power", Toast.LENGTH_SHORT).show();
             finish();
         }
 
-        //receiveTmp=null;
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         startService(gattServiceIntent);
 
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-
         mBluetoothAdapter = bluetoothManager.getAdapter();
         // Checks if Bluetooth is supported on the device.
         if (mBluetoothAdapter == null)
@@ -406,28 +392,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void commandAck(View v)    // for Button Ack onClick()
+    public void btnAckClick(View v)             // for Button Ack onClick()
     {
-        byte    cmdAck = getAckCommand();
-        Log.d("commandAck", format("cmdAck: %02x", cmdAck));
-
-        switch (cmdAck)
-        {
-            case (byte) 0xA0:
-                ackAction((byte) 0xA0);
-                break;
-
-            case (byte) 0xA1:
-                ackAction((byte) 0xA1);
-                break;
-
-            case (byte) 0xA2:
-                ackAction((byte) 0xA2);
-                break;
-
-            default:
-                break;
-        }
+        //byte cmdAck = getAckCommand();
+        //Log.d("commandAck", format("cmdAck: %02x", cmdAck));
+        Log.d("commandAck", format("cmdAck: %02x", ackCommand));
+        ackAction(ackCommand);
     }
 
     private void setAckCommand(byte command)    // command for Ack
@@ -435,10 +405,12 @@ public class MainActivity extends AppCompatActivity
         ackCommand = command;
     }
 
+    /*
     private byte getAckCommand()
     {
         return ackCommand;
     }
+    */
 
     public void btnResultClock(View v)
     {
@@ -526,7 +498,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
     private void LogDebugShow(String info, byte[] data)
     {
         for (int i=0;i<data.length; i++)
@@ -535,7 +506,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    //private void displayData(String data)
     private void NCFR_receviceData(String data)
     {
         if (data != null)
@@ -621,7 +591,8 @@ public class MainActivity extends AppCompatActivity
             {
                 //Log.d("Srv Event", "A0[" + i + "]: " + A0ReciveList.get(i).toString());
                 //LogDebugShow("Srv Event[" + i + "]", dataList.get(i));
-                parserRawData(dataList.get(i));
+                if (csCheck(dataList.get(i)))
+                    parserRawData(dataList.get(i));
             }
         }
     }
@@ -641,11 +612,11 @@ public class MainActivity extends AppCompatActivity
                 }
                 else
                 {
-                    int     tmpIntWord = makeWord(dataInfo[5], dataInfo[6]);
+                    int     tmpIntWord = byteToWord(dataInfo[5], dataInfo[6]);
                     String  ambient = getTemperature(tmpIntWord);
                     String  workModeStr = workMode((byte) ((dataInfo[7] & 0x0080) >>> 7));
 
-                    tmpIntWord = makeWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
+                    tmpIntWord = byteToWord((byte) (dataInfo[7] & 0x007F), dataInfo[8]);
                     String  measure = getTemperature(tmpIntWord);
                     String  ncfrDate = measureTime((dataInfo[9]), dataInfo[10], dataInfo[11],
                                                     (byte) (dataInfo[12] & 0x003F));
@@ -662,17 +633,16 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA2:
-                int     CA2Intemp = makeWord(dataInfo[5], dataInfo[6]);
+                int     CA2Intemp = byteToWord(dataInfo[5], dataInfo[6]);
                 String  CA2Parameter = format("CA2 = %04Xh = %04d", CA2Intemp, CA2Intemp);
 
-                int     CA3Intemp = makeWord(dataInfo[7], dataInfo[8]);
+                int     CA3Intemp = byteToWord(dataInfo[7], dataInfo[8]);
                 String  CA3Parameter = format("CA3 = %04Xh = %04d", CA3Intemp, CA3Intemp);
 
-                int     CA3Vol = makeWord(dataInfo[9], dataInfo[10]);
+                int     CA3Vol = byteToWord(dataInfo[9], dataInfo[10]);
                 float   tmpVoltage = ((float)CA3Vol / 1000.0f);
                 String  CA3Voltage = format("CA3 Voltage = %4.3f uV", tmpVoltage);
-
-                String  CA3Ambient = getTemperature(makeWord(dataInfo[11], dataInfo[12]));
+                String  CA3Ambient = getTemperature(byteToWord(dataInfo[11], dataInfo[12]));
 
                 A2Message = CA2Parameter + ", " + nextLine + CA3Parameter + nextLine
                           + CA3Voltage + nextLine + "CA3 temp: " + CA3Ambient;
@@ -713,15 +683,15 @@ public class MainActivity extends AppCompatActivity
         return (tmpString);
     }
 
-    private int makeWord(byte dataH, byte dataL)
+    private int byteToWord(byte dataH, byte dataL)
     {
         int     tmpValue=0;
 
         tmpValue |= (int) (dataH & 0x00ff);
         tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
-        Log.d("makeWord", " merge 2 byte: " + tmpValue);
-        return tmpValue;
+        Log.d("byteToWord", " merge 2 byte: " + tmpValue);
+        return (tmpValue & 0x0000ffff);
     }
 
     private String getTemperature(int value)
@@ -763,6 +733,25 @@ public class MainActivity extends AppCompatActivity
             return (ErrorMessage[(info & 0x003f)] + ", Error!");
     }
 
+    private boolean csCheck(byte[] data)
+    {
+        int tempCS = 0;
+        int length = data.length;
+
+        for (int i=0; i<(length-1); i++)
+        {
+            tempCS += data[i];
+        }
+        Log.d("csCheck", "byte array CS: " + tempCS);
+
+        if ((tempCS & 0x00ff) == (data[length-1] & 0x00ff))
+            return true;
+        else
+        {
+            InsertMessage( Utils.getHexToString(data) + "\r\nCheck Sum Error !!, Calculte: " + tempCS);
+            return false;
+        }
+    }
 
 
     @Override
