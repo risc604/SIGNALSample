@@ -693,8 +693,7 @@ public class MainActivity extends AppCompatActivity
         int     tmpValue=0;
 
         tmpValue |= (int) (dataH & 0x00ff);
-        //tmpValue <<= 8;
-        tmpValue = ((tmpValue & 0x0000ffff) << 8);
+        tmpValue <<= 8;
         tmpValue |= (int) (dataL & 0x00ff);
         Log.d("byteToWord", " merge 2 byte: " + tmpValue);
         return (tmpValue & 0x0000ffff);
