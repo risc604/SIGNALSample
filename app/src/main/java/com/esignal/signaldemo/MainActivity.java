@@ -5,7 +5,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -46,8 +45,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+
 import static java.lang.String.format;
 
 public class MainActivity extends AppCompatActivity
@@ -692,7 +690,7 @@ public class MainActivity extends AppCompatActivity
 
         tmpMonth |= ((mHour & 0x00C0) >>> 2);
         tmpMonth |= (byte) (mDay & 0x00C0);
-        tmpMonth >>= 4;
+        tmpMonth =  (byte) ((tmpMonth & 0x00FF) >>> 4);
 
         return(String.format("%04d/%02d/%02d, %02d:%02d",
                 ((int)tmpYear + 2000), (int)tmpMonth, (int)tmpDay, (int)tmpHour, (int)mMinute));
