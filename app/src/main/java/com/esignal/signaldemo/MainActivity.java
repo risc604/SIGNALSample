@@ -45,6 +45,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -133,6 +134,7 @@ public class MainActivity extends AppCompatActivity
             else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action))        //裝置斷線
             {
                 invalidateOptionsMenu();
+                parserData(A0ReciveList);
                 mConnect.setText("Disconnected");
                 InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Disonnected");
 
@@ -601,6 +603,10 @@ public class MainActivity extends AppCompatActivity
                 else
                     InsertMessage("Error, parser lsit data item CS fail.");
             }
+            Arrays.fill( A0Tmp, (byte) 0 );
+            Arrays.fill( A1Tmp, (byte) 0 );
+            Arrays.fill( A2Tmp, (byte) 0 );
+            A0ReciveList.clear();
         }
     }
 
@@ -635,6 +641,16 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
+                if ((dataInfo[11] & 0x00ff) == 0x03)
+                {
+                    String macAddrStr = Utils.removeColon(mBluetoothLeService.mBluetoothGattAddress);
+                    byte[] macAddr = Utils.hexStringToByteArray(macAddrStr);
+                    Log.d("RawData", "macAddr length: " + macAddr.length);
+                    for (int i=0; i<macAddr.length; i++)
+                    {
+                        dataInfo[5+i] = macAddr[i];
+                    }
+                }
                 A1Message = getMACAddress(dataInfo) + workMode(dataInfo[11])
                             + ", " + batteryState(dataInfo[12]);
                 break;
