@@ -70,7 +70,6 @@ public class MainActivity extends AppCompatActivity
     boolean SearchBLE = false;
     boolean BLUETOOTH_ENABLE = false;
     boolean BLUETOOTH_RECONNECT = false;
-    private byte[]  macAddr = new byte[6];
 
     private final String    NEXTLINE = "\r\n";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -459,11 +458,14 @@ public class MainActivity extends AppCompatActivity
             case (byte) 0xA1:
                 if (flag)
                 {
-                    int tmpCS = 0;
+                    Log.d("testCommand", "BLE MAC Addr: " + mBluetoothLeService.mBluetoothGattAddress);
+                    String macAddrStr = Utils.removeColon(mBluetoothLeService.mBluetoothGattAddress);
+                    byte[] macAddr = Utils.hexStringToByteArray(macAddrStr);
                     testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x08, (byte) 0x01,
                             (byte) macAddr[0], (byte) macAddr[1], (byte) macAddr[2],
                             (byte) macAddr[3], (byte) macAddr[4], (byte) macAddr[5], 0x00};
 
+                    int tmpCS = 0;
                     for (int i=0; i<testCommand.length-1; i++)  //CS
                     {
                         tmpCS += testCommand[i];
@@ -548,8 +550,6 @@ public class MainActivity extends AppCompatActivity
                 */
                 if (((byteArray[4] & 0x00ff) == 0xA1) && ((byteArray[11] & 0x00ff) == 0x03))
                 {
-                    for (int i=0; i<macAddr.length; i++)
-                        macAddr[0] = byteArray[5+i];
                     flagCALMod = true;
                 }
                 Log.d("NCFR_receviceData", "cmd: " + byteArray[4] + " to ACK.");
