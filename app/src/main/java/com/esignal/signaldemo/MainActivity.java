@@ -83,7 +83,6 @@ public class MainActivity extends AppCompatActivity
     private byte[]  A0Tmp = new byte[14];    // to void receive the same raw data. (repeat same info)
     private byte[]  A1Tmp = new byte[14];
     private byte[]  A2Tmp = new byte[14];
-    private byte[]  macAddr = new byte[6];
 
     private final ServiceConnection mServiceConnection = new ServiceConnection()
     {
@@ -123,7 +122,7 @@ public class MainActivity extends AppCompatActivity
             {
                 invalidateOptionsMenu();
                 mConnect.setText("Connected");
-                InsertMessage(mBluetoothLeService.mBluetoothGattAddress+" Connected");
+                InsertMessage(mBluetoothLeService.mBluetoothGattAddress + " Connected");
 
                 if(OpenDialog)
                 {
@@ -440,10 +439,15 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
-                Log.d("AckAction", "flag: " + flagCALMod);
                 if (flagCALMod)
                 {
                     int tmpCS = 0;
+                    Log.d("AckAction", "flag: " + flagCALMod +
+                            ", BLE MAC Addr: " + mBluetoothLeService.mBluetoothGattAddress);
+                    String macAddrStr = Utils.removeColon(mBluetoothLeService.mBluetoothGattAddress);
+                    byte[] macAddr = Utils.hexStringToByteArray(macAddrStr);
+                    //LogDebugShow("macAddr", macAddr);
+
                     testCommand = new byte[]{0x4D, (byte) 0xFE, 0x00, 0x08, (byte) 0x01,
                             (byte) macAddr[0], (byte) macAddr[1], (byte) macAddr[2],
                             (byte) macAddr[3], (byte) macAddr[4], (byte) macAddr[5], 0x00};
@@ -549,10 +553,8 @@ public class MainActivity extends AppCompatActivity
                             A1Tmp = byteArray.clone();      // keep to check repeat raw data.
                             if ((byteArray[11] & 0x00ff) == 0x03)      // CAL mode.
                             {
-                                for (int i=0; i<6; i++)
-                                    macAddr[i] = byteArray[5+i];
                                 flagCALMod = true;
-                                Log.d("receviceData", "CAL mode A1 Ack flag, " + flagCALMod);
+                                Log.d(  "receviceData", "CAL mode A1 Ack flag, " + flagCALMod);
                             }
                             //LogDebugShow("A1 new item", A0ReciveList.get(A0ReciveList.size()-1));
                         }

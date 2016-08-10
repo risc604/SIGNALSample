@@ -1,5 +1,7 @@
 package com.esignal.signaldemo;
 
+import android.util.Log;
+
 import java.util.Calendar;
 
 /**
@@ -52,5 +54,34 @@ public class Utils
         }
         return hex.toString();
     }
+
+    public static byte[] hexStringToByteArray(String s)
+    {
+        int len = s.length();
+        byte[] data = new byte[len/2];
+
+        for (int i=0; i<len; i+=2)
+        {
+            data[i/2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i+1), 16));
+
+        }
+        return data;
+    }
+
+    public static String removeColon(String s)
+    {
+        String strArray[] = s.split(":");
+        String tmpStr = "";
+        Log.d("Colon", "string Array: " + strArray.toString());
+
+        for (int i=0; i<strArray.length; i++)
+        {
+            tmpStr += strArray[i];
+        }
+        Log.d("Colon", "no Colon string: " + tmpStr);
+
+        return tmpStr;
+    }
+
 
 }
