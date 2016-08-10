@@ -45,6 +45,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static java.lang.String.format;
 
@@ -557,6 +558,7 @@ public class MainActivity extends AppCompatActivity
                 ackAction((byte) byteArray[4], flagCALMod);
 
                 parserRawData(byteArray);
+                Arrays.fill(byteArray, (byte) 0);
                 mBluetoothLeService.broadcastUpdate(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
             }
 
@@ -599,6 +601,16 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case (byte) 0xA1:
+
+                if ((dataInfo[11] & 0x00ff) == 0x03)
+                {
+                    byte[] macAddr = Utils.hexStringToByteArray(Utils.removeColon(
+                                            mBluetoothLeService.mBluetoothGattAddress));
+                    for (int i = 0; i < macAddr.length; i++)
+                    {
+                        dataInfo[5 + i] = macAddr[i];
+                    }
+                }
                 A1Message = getMACAddress(dataInfo) + workMode(dataInfo[11])
                         + ", " + batteryState(dataInfo[12]);
                 break;
