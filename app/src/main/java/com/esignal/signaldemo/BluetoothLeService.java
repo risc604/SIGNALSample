@@ -26,10 +26,15 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.ParcelUuid;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static android.bluetooth.BluetoothDevice.TRANSPORT_AUTO;
+import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
 
 
 /**
@@ -81,9 +86,16 @@ public class BluetoothLeService extends Service
     public final static String ACTION_Enable = "com.example.bluetooth.le.ACTION_Enable";
     public final static String ACTION_Connect_Fail = "com.example.bluetooth.le.ACTION_Connect_Fail";
 
-    //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-    public final static UUID UUID_NOTIFY_CHARACTERISTIC =  UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
+    //public final static UUID UUID_HEART_RATE_MEASUREMENT =
+    //      UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+    public final static ParcelUuid UUID_MLC_CHARACTERISTIC = ParcelUuid.fromString(SampleGattAttributes.MLC_CHARACTERISTIC);
+    //public final static ParcelUuid UUID_NOTIFY_CHARACTERISTIC = ParcelUuid.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
+    //public final static ParcelUuid UUID_WRITE_CHARACTERISTIC = ParcelUuid.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
+
+    //public final static UUID UUID_MLC_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.MLC_CHARACTERISTIC);
+    public final static UUID UUID_NOTIFY_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.NOTIFY_CHARACTERISTIC);
     public final static UUID UUID_WRITE_CHARACTERISTIC = UUID.fromString(SampleGattAttributes.WTIYE_CHARACTERISTIC);
+
 
     private int BLE_CONNECT_TIMEOUT=6000;                                   //CONNECT TIME OUT SETTING
     private Handler handler = new Handler();
@@ -389,6 +401,7 @@ public class BluetoothLeService extends Service
     /**********************************************************
      * 對裝置下達連線
      **********************************************************/
+    //@TargetApi(Build.VERSION_CODES.M)
     public boolean connect(final String address)
     {
         if (mBluetoothAdapter == null || address == null || mBluetoothGattConnected)
@@ -402,6 +415,7 @@ public class BluetoothLeService extends Service
         mConnectionState = STATE_CONNECTING;
         mBluetoothGattAddress = address;
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+        //mBluetoothGatt = device.connectGatt(this, true, mGattCallback, TRANSPORT_LE);
         Log.w(TAG, "Trying to Connect with " + mBluetoothGattAddress);
 
         //Connect Time Out Check  6 second
@@ -430,6 +444,9 @@ public class BluetoothLeService extends Service
                  /*   ScanFilter filter = new ScanFilter.Builder().setDeviceName(DeviceNameFilter).build();
                     filters = new ArrayList<ScanFilter>();
                     filters.add(filter);*/
+                    ScanFilter uuidfilter = new ScanFilter.Builder().setServiceUuid(UUID_MLC_CHARACTERISTIC).build();
+                    filters = new ArrayList<ScanFilter>();
+                    filters.add(uuidfilter);
                 }
                 mBluetoothScanner.startScan(filters, scanSettings, mScanCallback);
             }

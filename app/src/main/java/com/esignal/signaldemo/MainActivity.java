@@ -185,6 +185,23 @@ public class MainActivity extends AppCompatActivity
         mScroller = (ScrollView) findViewById(R.id.Scroller);
         mConnect = (TextView) findViewById(R.id.textView);
 
+
+        //if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+        //        != PackageManager.PERMISSION_GRANTED)
+        //{
+        //    if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+        //            Manifest.permission.ACCESS_COARSE_LOCATION))
+        //    {
+        //    }
+        //    else
+        //    {
+        //        ActivityCompat.requestPermissions(this,
+        //                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+        //                PERMISSION_REQUEST_COARSE_LOCATION);
+        //    }
+        //}
+
+
         mLeDeviceListAdapter = new LeDeviceListAdapter();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener()
@@ -601,7 +618,7 @@ public class MainActivity extends AppCompatActivity
                 if (csCheck(dataList.get(i)))
                     parserRawData(dataList.get(i));
                 else
-                    InsertMessage("Error, parser lsit data item CS fail.");
+                    InsertMessage("Error, parser list data item CS fail.");
             }
             Arrays.fill( A0Tmp, (byte) 0 );
             Arrays.fill( A1Tmp, (byte) 0 );
@@ -774,7 +791,7 @@ public class MainActivity extends AppCompatActivity
             return true;
         else
         {
-            InsertMessage( Utils.getHexToString(data) + "\r\nCheck Sum Error !!, Calculte: " + tempCS);
+            InsertMessage( Utils.getHexToString(data) + "\r\nCheck Sum Error !!, Calculate: " + tempCS);
             return false;
         }
     }
